@@ -1,0 +1,42 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: scm_backend
+    env_file:
+      - .env
+    expose:
+      - "8000"
+    networks:
+      - scm_network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: scm_frontend
+    depends_on:
+      - backend
+    expose:
+      - "80"
+    networks:
+      - scm_network
+    restart: unless-stopped
+
+  cloudflare_tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: scm_tunnel
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - frontend
+    networks:
+      - scm_network
+    restart: unless-stopped
+
+networks:
+  scm_network:
+    driver: bridge

@@ -1,0 +1,38 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: scm_backend_dev
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - scm_network_dev
+    restart: unless-stopped
+
+  frontend:
+    # Usamos la imagen base de Bun directamente para el entorno de desarrollo
+    image: oven/bun:1
+    container_name: scm_frontend_dev
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # Evita sobreescribir los modulos con los de local
+    ports:
+      - "5173:5173"
+    # El comando instala dependencias si faltan y levanta vite
+    command: sh -c "bun install && bun run dev --host 0.0.0.0"
+    depends_on:
+      - backend
+    networks:
+      - scm_network_dev
+    restart: unless-stopped
+
+networks:
+  scm_network_dev:
+    driver: bridge
