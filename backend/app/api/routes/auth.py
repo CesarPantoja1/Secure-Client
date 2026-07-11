@@ -6,7 +6,6 @@ from app.schemas.auth import LoginRequest, LoginResponse
 from app.services.supabase import supabase_client, safe_supabase_call
 from app.core.exceptions import SCMException
 from app.core.rate_limit import limiter
-from app.core.config import settings
 
 from app.dependencies.auth import decode_supabase_token
 

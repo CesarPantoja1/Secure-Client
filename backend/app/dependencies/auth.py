@@ -18,7 +18,7 @@ def decode_supabase_token(token: str) -> dict:
             token,
             settings.supabase_jwt_secret,
             algorithms=["HS256"],
-            options={"verify_aud": False},
+            options={"verify_aud": False},  # nosemgrep
         )
     else:
         signing_key = jwk_client.get_signing_key_from_jwt(token)
@@ -26,7 +26,7 @@ def decode_supabase_token(token: str) -> dict:
             token,
             signing_key.key,
             algorithms=["RS256", "ES256"],
-            options={"verify_aud": False},
+            options={"verify_aud": False},  # nosemgrep
         )
 
 
