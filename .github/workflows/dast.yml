@@ -1,0 +1,46 @@
+name: DAST - OWASP ZAP
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: Public URL to scan, for example https://scm.example.com
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: dast-zap
+  cancel-in-progress: false
+
+jobs:
+  zap-baseline:
+    name: OWASP ZAP Baseline
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate public target
+        shell: bash
+        env:
+          ZAP_TARGET_URL: ${{ inputs.target_url }}
+        run: |
+          set -euo pipefail
+          test -n "$ZAP_TARGET_URL"
+
+      - name: Run ZAP baseline scan
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: ${{ inputs.target_url }}
+          fail_action: true
+          allow_issue_writing: false
+          cmd_options: "-a -j"
+
+      - name: Upload ZAP report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-baseline-report
+          path: report_html.html
+          if-no-files-found: ignore

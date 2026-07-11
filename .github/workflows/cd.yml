@@ -1,0 +1,97 @@
+name: CD - VM Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        default: production
+        type: choice
+        options:
+          - production
+          - staging
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cd-${{ inputs.environment || 'production' }}
+  cancel-in-progress: false
+
+jobs:
+  deploy-vm:
+    name: Deploy to AWS or Azure VM
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'production' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate deployment secrets
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+          test -n "$DEPLOY_PATH"
+
+      - name: Prepare SSH key
+        shell: bash
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy with Docker Compose through SSH
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          COMPOSE_PROJECT_NAME: secureclient
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy_key "$DEPLOY_USER@$DEPLOY_HOST" \
+            "set -euo pipefail
+             cd '$DEPLOY_PATH'
+             git fetch --prune origin
+             git checkout main
+             git pull --ff-only origin main
+             docker compose pull || true
+             docker compose build
+             docker compose up -d --remove-orphans
+             docker compose ps"
+
+      - name: Remote health check
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          HEALTHCHECK_URL: ${{ secrets.HEALTHCHECK_URL }}
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy_key "$DEPLOY_USER@$DEPLOY_HOST" \
+            "set -euo pipefail
+             cd '$DEPLOY_PATH'
+             docker compose ps --format json >/tmp/secureclient-compose.json
+             docker compose exec -T backend sh -c 'command -v curl >/dev/null && curl --fail --silent --show-error --max-time 10 http://localhost:8000/health || true'"
+
+          if [[ -n "$HEALTHCHECK_URL" ]]; then
+            curl --fail --silent --show-error --max-time 20 "$HEALTHCHECK_URL"
+          else
+            echo "HEALTHCHECK_URL not configured; public Cloudflare health check skipped."
+          fi
+          
