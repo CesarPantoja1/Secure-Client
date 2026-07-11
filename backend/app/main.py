@@ -3,14 +3,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from starlette.middleware.cors import CORSMiddleware
-from starlette.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.config import settings
 from app.core.exceptions import (
-    ConflictError,
-    ForbiddenError,
-    NotFoundError,
     SCMException,
     general_exception_handler,
     http_exception_handler,
@@ -26,13 +22,11 @@ logging.basicConfig(
 logger = logging.getLogger("scm.backend")
 
 
-# Definición del ciclo de vida (Lifespan) que reemplaza a on_event
+# Definición del ciclo de vida (Lifespan)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Esto ejecuta al iniciar el backend (antiguo startup)
     logger.info("SCM backend started")
     yield
-    # Aquí puedes agregar código si necesitas limpiar recursos al apagar (shutdown)
 
 
 # Inicialización de FastAPI con lifespan

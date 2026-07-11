@@ -5,7 +5,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 class CSRFMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        if request.method in {"POST", "PUT", "PATCH", "DELETE"}:\n            csrf_header = request.headers.get("X-CSRF-Token")
+        if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+            csrf_header = request.headers.get("X-CSRF-Token")
             csrf_cookie = request.cookies.get("scm_csrf_token")
             if csrf_header is None or csrf_cookie is None or csrf_header != csrf_cookie:
                 return JSONResponse(

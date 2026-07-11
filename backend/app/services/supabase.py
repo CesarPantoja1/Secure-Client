@@ -4,7 +4,7 @@ from typing import Any, Callable
 from supabase import Client, create_client
 
 from app.core.config import settings
-from app.core.exceptions import AuthenticationError, SCMException
+from app.core.exceptions import SCMException
 
 logger = logging.getLogger("scm.backend")
 
