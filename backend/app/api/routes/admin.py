@@ -225,7 +225,12 @@ def update_user(
             safe_supabase_call(
                 supabase_admin_client.auth.admin.update_user_by_id,
                 user_id,
-                {"app_metadata": {"role": req.role.value, "tenant_id": admin.tenant_id}},
+                {
+                    "app_metadata": {
+                        "role": req.role.value,
+                        "tenant_id": admin.tenant_id,
+                    }
+                },
             )
         except Exception as e:
             raise SCMException(f"Error al actualizar metadata de auth: {e}")
