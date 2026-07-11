@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../contexts/AuthContext";
 import ErrorNotification from "../components/ErrorNotification";
+import { CreateUserModal } from "../components/CreateUserModal";
+import { EditUserModal } from "../components/EditUserModal";
 import styles from "./AdminUsersPage.module.css";
-
 
 export default function AdminUsersPage() {
   const { execute, loading, error, clearError } = useApi();
@@ -12,6 +13,9 @@ export default function AdminUsersPage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const pageSize = 10;
+  
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
 
   const fetchUsers = useCallback(async (currentPage) => {
     try {
@@ -41,8 +45,8 @@ export default function AdminUsersPage() {
   const handlePrevPage = () => { if (page > 1) setPage(page - 1); };
 
   // Handlers
-  const handleNewUser = () => alert("Nuevo Usuario - En desarrollo (Tarea 3.4)");
-  const handleActionsClick = (user) => alert(`Acciones para ${user.email} - En desarrollo (Tarea 3.4)`);
+  const handleNewUser = () => setIsCreateModalOpen(true);
+  const handleActionsClick = (user) => setEditingUser(user);
 
   // Métricas derivadas (Mock para las que no devuelve el backend aún)
   const adminsCount = useMemo(() => users.filter(u => u.role === 'admin').length, [users]);
@@ -235,6 +239,21 @@ export default function AdminUsersPage() {
           </div>
         )}
       </div>
+
+      {isCreateModalOpen && (
+        <CreateUserModal 
+          onClose={() => setIsCreateModalOpen(false)} 
+          onSuccess={() => { setIsCreateModalOpen(false); fetchUsers(page); }} 
+        />
+      )}
+
+      {editingUser && (
+        <EditUserModal 
+          user={editingUser} 
+          onClose={() => setEditingUser(null)} 
+          onSuccess={() => { setEditingUser(null); fetchUsers(page); }} 
+        />
+      )}
     </div>
   );
 }
