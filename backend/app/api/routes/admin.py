@@ -1,10 +1,13 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
 from app.schemas.admin import CreateTenantRequest, CreateTenantResponse
 from app.services.supabase import supabase_admin_client, safe_supabase_call
 from app.core.exceptions import ConflictError, SCMException
 from app.core.rate_limit import limiter
+from app.dependencies.auth import require_admin
 
-router = APIRouter(prefix="/api/admin", tags=["Admin"])
+router = APIRouter(
+    prefix="/api/admin", tags=["Admin"], dependencies=[Depends(require_admin)]
+)
 
 
 @router.post("/tenants", response_model=CreateTenantResponse)

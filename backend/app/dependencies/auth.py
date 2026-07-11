@@ -98,3 +98,11 @@ def require_role(required_role: str):
         return context
 
     return role_dependency
+
+
+async def require_admin(
+    context: AuthContext = Depends(get_auth_context),
+) -> AuthContext:
+    if context.role != "admin":
+        raise ForbiddenError("Se requieren privilegios de administrador")
+    return context
