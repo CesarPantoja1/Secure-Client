@@ -13,19 +13,17 @@ COPY . .
 RUN bun run build
 
 # ==========================================
-# Etapa 2: Producción (Nginx)
+# Etapa 2: Producción (Nginx Unprivileged)
 # ==========================================
-FROM nginx:alpine
+FROM nginxinc/nginx-unprivileged:alpine
 
-# Eliminar conf por defecto y usar el nuestro seguro
+# Limpiar configuración por defecto y meter la nuestra
 RUN rm /etc/nginx/conf.d/default.conf
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copiar los assets estáticos desde el builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Correr como usuario no-root por seguridad
-RUN chown -R nginx:nginx /usr/share/nginx/html /etc/nginx/conf.d /var/cache/nginx /var/run /var/log/nginx
 USER nginx
 
 EXPOSE 8080
