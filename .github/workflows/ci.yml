@@ -1,14 +1,12 @@
 name: CI — SecureClient DevSecOps
 
 on:
-  pull_request:
-    branches:
-      - main
-      - develop
   push:
     branches:
       - main
       - develop
+      - "feature/**"
+      - "hotfix/**"
   workflow_dispatch:
 
 permissions:
@@ -101,7 +99,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const allowed = /^(feat|fix|chore|docs|build|test|ci|cd): [a-z0-9][a-z0-9 .,:;()/_-]*$/;
+            const allowed = /^(feat|fix|chore|docs|build|test|ci|cd)(\([a-z0-9_-]+\))?: [a-zA-Z0-9][a-zA-Z0-9 .,:;()/_-]*$/;
             const { owner, repo } = context.repo;
             const commits = await github.paginate(
               github.rest.pulls.listCommits,
