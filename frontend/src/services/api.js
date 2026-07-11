@@ -64,7 +64,7 @@ export async function apiRequest(path, options = {}) {
     data = { success: true };
   }
 
-  if (!response.ok || !data.success) {
+  if (!response.ok || data.success === false) {
     throw new ApiError(
       data.message || response.statusText || 'Error en la petición',
       response.status,

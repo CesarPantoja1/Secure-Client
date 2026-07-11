@@ -795,7 +795,7 @@ body {
 .app-shell {
   display: flex;
   min-height: 100dvh;
-  background-color: var(--neutral-100);
+  background-color: var(--neutral-50);
 }
 
 /* Sidebar */
@@ -1068,30 +1068,50 @@ body {
 .user-profile-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   background: none;
-  border: 1px solid var(--surface-border);
+  border: none;
   cursor: pointer;
-  padding: 4px 12px 4px 4px;
+  padding: 0;
   border-radius: var(--radius-full);
-  transition: background var(--t-fast), border-color var(--t-fast);
+  transition: opacity var(--t-fast);
 }
 
 .user-profile-btn:hover {
-  background: var(--neutral-50);
-  border-color: var(--neutral-300);
+  opacity: 0.8;
+}
+
+.user-role-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.user-role-pill.employee {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.user-role-pill.admin {
+  background: #e0e7ff;
+  color: #2e3b84;
+  border: 1px solid #c7d2fe;
 }
 
 .user-avatar {
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   background: var(--color-primary-800);
   color: white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
 }
 
@@ -1110,14 +1130,32 @@ body {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  width: 220px;
+  width: 240px;
   background: var(--surface-bg);
   border: 1px solid var(--surface-border);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
   padding: 8px 0;
   display: none;
   flex-direction: column;
+  z-index: 50;
+  animation: dropdown-fade 0.2s var(--ease);
+}
+
+@keyframes dropdown-fade {
+  from { opacity: 0; transform: translateY(-8px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Puente invisible para mantener el hover al mover el mouse */
+.user-dropdown-menu::before {
+  content: "";
+  position: absolute;
+  top: -12px;
+  left: 0;
+  width: 100%;
+  height: 12px;
+  background: transparent;
 }
 
 .user-dropdown-container:hover .user-dropdown-menu,

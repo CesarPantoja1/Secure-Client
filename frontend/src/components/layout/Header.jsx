@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Building2, SearchIcon, BellIcon, UserIcon, LogOutIcon } from "./Icons";
+import { Building2, SearchIcon, BellIcon, UserIcon, LogOutIcon, Shield } from "./Icons";
 import { useAuth } from "../../contexts/AuthContext";
 
 export function Header() {
@@ -39,8 +39,8 @@ export function Header() {
 
         <div className="user-dropdown-container">
           <button className="user-profile-btn">
-            <span className="user-role-badge">
-              <UserIcon size={14} />
+            <span className={`user-role-pill ${role === 'admin' ? 'admin' : 'employee'}`}>
+              <Shield size={14} />
               {role === 'admin' ? 'Administrador' : 'Empleado'}
             </span>
             <div className="user-avatar">
