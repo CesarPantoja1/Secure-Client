@@ -24,5 +24,9 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Copiar los assets estáticos desde el builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-EXPOSE 80
+# Correr como usuario no-root por seguridad
+RUN chown -R nginx:nginx /usr/share/nginx/html /etc/nginx/conf.d /var/cache/nginx /var/run /var/log/nginx
+USER nginx
+
+EXPOSE 8080
 CMD ["nginx", "-g", "daemon off;"]
