@@ -1,11 +1,15 @@
 import secrets
 import jwt
+import logging
 from fastapi import APIRouter, Request, Response, HTTPException
 from app.schemas.auth import LoginRequest, LoginResponse
 from app.services.supabase import supabase_client, safe_supabase_call
 from app.core.exceptions import SCMException
 from app.core.rate_limit import limiter
-from app.core.config import settings
+
+from app.dependencies.auth import decode_supabase_token
+
+logger = logging.getLogger("scm.backend")
 
 router = APIRouter(prefix="/api", tags=["Auth"])
 
@@ -60,17 +64,22 @@ def get_me(request: Request):
         raise HTTPException(status_code=401, detail="No autenticado")
 
     try:
-        payload = jwt.decode(
-            token,
-            settings.supabase_jwt_secret,
-            algorithms=["HS256"],
-            audience="authenticated",
-        )
+        payload = decode_supabase_token(token)
+
+        # Extract role
+        root_role = payload.get("role")
+        if root_role == "service_role":
+            role = "service_role"
+        else:
+            app_metadata = payload.get("app_metadata", {})
+            role = app_metadata.get("role", "empleado")
+
         return {
             "user_id": payload.get("sub"),
             "email": payload.get("email"),
-            "role": payload.get("role"),
+            "role": role,
             "tenant_id": payload.get("app_metadata", {}).get("tenant_id"),
         }
-    except jwt.InvalidTokenError:
+    except jwt.InvalidTokenError as e:
+        logger.warning("JWT decode failed in get_me: %s - %s", type(e).__name__, str(e))
         raise HTTPException(status_code=401, detail="Token inválido")
