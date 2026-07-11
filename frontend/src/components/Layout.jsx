@@ -1,9 +1,9 @@
-import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Layout({ children }) {
-  const { role, logout } = useAuth();
+  const { user, logout } = useAuth();
+  const role = user?.role;
   const navigate = useNavigate();
 
   const handleLogout = () => {

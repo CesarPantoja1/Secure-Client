@@ -1,5 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate, Link, Outlet } from "react-router-dom";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
 import LoginPage from "./pages/LoginPage";
 import AdminTenantsPage from "./pages/AdminTenantsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -16,7 +16,6 @@ const AuditoriaPage = () => <div style={{padding: 20}}><h2>Auditoría - En const
 const NotasPage = () => <div style={{padding: 20}}><h2>Notas - En construcción</h2></div>;
 
 function DashboardPlaceholder() {
-  const { user } = useAuth();
 
   return (
     <div className="dashboard-placeholder">
