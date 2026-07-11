@@ -53,7 +53,7 @@ export async function apiRequest(path, { method = "GET", body } = {}) {
     } else {
       try {
         const err = await res.json();
-        detail = err.detail || detail;
+        detail = err.detail || err.error?.message || err.message || detail;
       } catch {
         /* response body wasn't JSON */
       }

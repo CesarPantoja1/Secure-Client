@@ -6,7 +6,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
 
 // Placeholders para páginas no implementadas
-const AdminUsersPage = () => <div style={{padding: 20}}><h2>Admin Usuarios - En construcción</h2></div>;
+import AdminUsersPage from "./pages/AdminUsersPage";
 const ClientesListPage = () => <div style={{padding: 20}}><h2>Clientes - En construcción</h2></div>;
 const ClienteFormPage = () => <div style={{padding: 20}}><h2>Formulario de Cliente - En construcción</h2></div>;
 const ClienteDetailPage = () => <div style={{padding: 20}}><h2>Detalle de Cliente - En construcción</h2></div>;
