@@ -1,8 +1,5 @@
-import pytest
 import uuid
 import time
-import time
-import os
 from fastapi.testclient import TestClient
 from app.main import app
 from app.core.config import settings
