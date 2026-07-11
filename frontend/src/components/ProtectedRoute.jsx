@@ -1,29 +1,20 @@
-import { Navigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import React from 'react';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
-/**
- * Wraps a route so only authenticated users can access it.
- * While the initial auth check runs, shows a loading spinner.
- */
 export default function ProtectedRoute({ children, requiredRole }) {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, role } = useAuth(); // asumimos que el context provee esto
 
-  if (loading) {
-    return (
-      <div className="loading-screen">
-        <div className="loading-spinner" />
-        <p className="loading-text">Verificando sesión…</p>
-      </div>
-    );
-  }
-
+  // Si no está autenticado, redirigir al login
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredRole && user?.role !== requiredRole) {
+  // Si requiere un rol específico y el usuario no lo tiene, redirigir al dashboard
+  if (requiredRole && role !== requiredRole) {
     return <Navigate to="/" replace />;
   }
 
+  // Todo OK, renderizar los hijos (contenido protegido)
   return children;
 }
