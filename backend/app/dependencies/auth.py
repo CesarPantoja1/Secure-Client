@@ -5,23 +5,46 @@ from app.core.exceptions import AuthenticationError, ForbiddenError
 from app.schemas.auth import AuthContext
 from app.services.supabase import supabase_client
 
+jwks_url = f"{settings.supabase_url}/auth/v1/.well-known/jwks.json"
+jwk_client = jwt.PyJWKClient(jwks_url, headers={"apikey": settings.supabase_anon_key})
+
+
+def decode_supabase_token(token: str) -> dict:
+    unverified_header = jwt.get_unverified_header(token)
+    alg = unverified_header.get("alg")
+
+    if alg == "HS256":
+        return jwt.decode(
+            token,
+            settings.supabase_jwt_secret,
+            algorithms=["HS256"],
+            options={"verify_aud": False},
+        )
+    else:
+        signing_key = jwk_client.get_signing_key_from_jwt(token)
+        return jwt.decode(
+            token,
+            signing_key.key,
+            algorithms=["RS256", "ES256"],
+            options={"verify_aud": False},
+        )
+
 
 async def get_auth_context(request: Request, response: Response) -> AuthContext:
     token = request.cookies.get("scm_access_token")
+    if not token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+
     if not token:
         raise AuthenticationError("No token provided")
 
     try:
         # Decode and verify JWT
-        payload = jwt.decode(
-            token,
-            settings.supabase_jwt_secret,
-            algorithms=["HS256"],
-            audience="authenticated",
-            issuer=f"{settings.supabase_url}/auth/v1",
-        )
+        payload = decode_supabase_token(token)
     except jwt.ExpiredSignatureError:
-        # Attempt transparent refresh
+        # Attempt transparent refresh (only if it was a cookie session)
         refresh_token = request.cookies.get("scm_refresh_token")
         if not refresh_token:
             raise AuthenticationError("Token expired and no refresh token available")
@@ -48,13 +71,7 @@ async def get_auth_context(request: Request, response: Response) -> AuthContext:
             )
 
             # Decode the newly refreshed token
-            payload = jwt.decode(
-                auth_res.session.access_token,
-                settings.supabase_jwt_secret,
-                algorithms=["HS256"],
-                audience="authenticated",
-                issuer=f"{settings.supabase_url}/auth/v1",
-            )
+            payload = decode_supabase_token(auth_res.session.access_token)
         except Exception:
             raise AuthenticationError("Token expired and refresh failed")
     except jwt.InvalidTokenError:
@@ -80,11 +97,18 @@ async def get_auth_context(request: Request, response: Response) -> AuthContext:
             # To keep it simple, if exception occurs during query, we just proceed or log.
             pass
 
-    user_id = payload.get("sub")
-    email = payload.get("email", "")
-    app_metadata = payload.get("app_metadata", {})
-    role = app_metadata.get("role", "empleado")
-    tenant_id = app_metadata.get("tenant_id")
+    user_id = payload.get("sub", "service_role")
+    email = payload.get("email", "service_role@supabase.local")
+
+    # Extract role
+    root_role = payload.get("role")
+    if root_role == "service_role":
+        role = "service_role"
+    else:
+        app_metadata = payload.get("app_metadata", {})
+        role = app_metadata.get("role", "empleado")
+
+    tenant_id = payload.get("app_metadata", {}).get("tenant_id")
 
     return AuthContext(user_id=user_id, email=email, role=role, tenant_id=tenant_id)
 
@@ -93,7 +117,11 @@ def require_role(required_role: str):
     async def role_dependency(
         context: AuthContext = Depends(get_auth_context),
     ) -> AuthContext:
-        if context.role != required_role and context.role != "admin":
+        if (
+            context.role != required_role
+            and context.role != "admin"
+            and context.role != "service_role"
+        ):
             raise ForbiddenError(f"Minimum role required: {required_role}")
         return context
 
@@ -103,6 +131,6 @@ def require_role(required_role: str):
 async def require_admin(
     context: AuthContext = Depends(get_auth_context),
 ) -> AuthContext:
-    if context.role != "admin":
+    if context.role != "admin" and context.role != "service_role":
         raise ForbiddenError("Se requieren privilegios de administrador")
     return context

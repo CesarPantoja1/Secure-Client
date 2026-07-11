@@ -8,6 +8,10 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         if request.url.path in {"/api/login", "/api/health"}:
             return await call_next(request)
 
+        # Si hay cabecera Authorization (API/CLI), omitimos verificación CSRF
+        if request.headers.get("Authorization"):
+            return await call_next(request)
+
         if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
             csrf_header = request.headers.get("X-CSRF-Token")
             csrf_cookie = request.cookies.get("scm_csrf_token")
