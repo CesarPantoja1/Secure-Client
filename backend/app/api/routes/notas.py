@@ -1,0 +1,1 @@
+"""Notas routes placeholder."""
