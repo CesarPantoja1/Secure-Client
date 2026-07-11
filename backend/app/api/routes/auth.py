@@ -3,7 +3,11 @@ import jwt
 import logging
 from fastapi import APIRouter, Request, Response, HTTPException
 from app.schemas.auth import LoginRequest, LoginResponse
-from app.services.supabase import supabase_client, supabase_admin_client, safe_supabase_call
+from app.services.supabase import (
+    supabase_client,
+    supabase_admin_client,
+    safe_supabase_call,
+)
 from app.core.exceptions import SCMException
 from app.core.rate_limit import limiter
 
