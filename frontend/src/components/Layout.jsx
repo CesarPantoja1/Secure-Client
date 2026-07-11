@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { useAuth } from '../contexts/AuthContext';
 import { Sidebar } from './layout/Sidebar';
 import { Header } from './layout/Header';
