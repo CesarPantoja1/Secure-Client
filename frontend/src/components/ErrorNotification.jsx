@@ -1,4 +1,3 @@
-import React from 'react';
 import styles from './ErrorNotification.module.css';
 
 export default function ErrorNotification({ error, onDismiss }) {

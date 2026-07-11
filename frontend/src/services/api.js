@@ -49,7 +49,7 @@ export async function apiRequest(path, options = {}) {
       credentials: 'same-origin',
       ...rest,
     });
-  } catch (error) {
+  } catch {
     // Network error (sin conexión)
     throw new ApiError('Error de conexión. Verifica tu red.', 0, 'NETWORK_ERROR', null, null);
   }
@@ -57,7 +57,7 @@ export async function apiRequest(path, options = {}) {
   let data;
   try {
     data = await response.json();
-  } catch (error) {
+  } catch {
     if (!response.ok) {
       throw new ApiError(response.statusText || 'Error de servidor', response.status, 'SERVER_ERROR', null, null);
     }

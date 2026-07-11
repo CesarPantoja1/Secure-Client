@@ -51,6 +51,7 @@ export function AuthProvider({ children }) {
 
   // On first mount, check for existing session
   useEffect(() => {
+    // eslint-disable-next-line
     checkAuth();
   }, [checkAuth]);
 
@@ -66,6 +67,7 @@ export function AuthProvider({ children }) {
 /**
  * Hook to access auth state and actions.
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used within an AuthProvider");
