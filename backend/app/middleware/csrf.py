@@ -11,6 +11,11 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             if csrf_header is None or csrf_cookie is None or csrf_header != csrf_cookie:
                 return JSONResponse(
                     status_code=403,
-                    content={"error": {"code": "CSRF_INVALID", "message": "Invalid CSRF token"}},
+                    content={
+                        "error": {
+                            "code": "CSRF_INVALID",
+                            "message": "Invalid CSRF token",
+                        }
+                    },
                 )
         return await call_next(request)
