@@ -9,3 +9,10 @@ class LoginRequest(BaseModel):
 class LoginResponse(BaseModel):
     success: bool
     message: str
+
+
+class AuthContext(BaseModel):
+    user_id: str
+    tenant_id: str | None = None
+    email: str
+    role: str

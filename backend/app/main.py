@@ -8,6 +8,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.core.rate_limit import limiter
 from app.api.routes import auth
+from app.middleware.csrf import CSRFMiddleware
 
 from app.core.config import settings
 from app.core.exceptions import (
@@ -45,6 +46,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Middleware CSRF
+app.add_middleware(CSRFMiddleware)
 
 # Manejadores de Excepciones
 app.add_exception_handler(RequestValidationError, request_validation_exception_handler)
