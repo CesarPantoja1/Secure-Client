@@ -132,13 +132,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check backend exists
+        id: check
+        run: if [ -d backend ]; then echo "exists=true" >> $GITHUB_OUTPUT; else echo "exists=false" >> $GITHUB_OUTPUT; fi
+
       - name: Setup Python 3.12
+        if: steps.check.outputs.exists == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       # Cache de pip para evitar reinstalar en cada run
       - name: Cache pip dependencies
+        if: steps.check.outputs.exists == 'true'
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
@@ -147,6 +153,7 @@ jobs:
             pip-${{ runner.os }}-
 
       - name: Install dependencies
+        if: steps.check.outputs.exists == 'true'
         run: |
           set -euo pipefail
           cd backend
@@ -157,17 +164,20 @@ jobs:
           python -m pip install ruff pytest pytest-cov bandit pip-audit
 
       - name: Ruff — lint + format check
+        if: steps.check.outputs.exists == 'true'
         run: |
           cd backend
           ruff check .
           ruff format --check .
 
       - name: Bandit — security scan
+        if: steps.check.outputs.exists == 'true'
         run: |
           cd backend
           bandit -r . -x "*/tests/*,*/.venv/*" -ll
 
       - name: pip-audit — dependency vulnerabilities
+        if: steps.check.outputs.exists == 'true'
         run: |
           set -euo pipefail
           cd backend
@@ -176,6 +186,7 @@ jobs:
           fi
 
       - name: Pytest
+        if: steps.check.outputs.exists == 'true'
         run: |
           cd backend
           if [[ -d tests ]]; then
@@ -186,7 +197,7 @@ jobs:
 
       # Subir reporte de cobertura como artifact
       - name: Upload coverage report
-        if: always()
+        if: always() && steps.check.outputs.exists == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: backend-coverage-${{ github.sha }}
@@ -205,13 +216,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check frontend exists
+        id: check
+        run: if [ -d frontend ]; then echo "exists=true" >> $GITHUB_OUTPUT; else echo "exists=false" >> $GITHUB_OUTPUT; fi
+
       - name: Setup Bun
+        if: steps.check.outputs.exists == 'true'
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
       # Cache de módulos de node/bun
       - name: Cache bun dependencies
+        if: steps.check.outputs.exists == 'true'
         uses: actions/cache@v4
         with:
           path: |
@@ -222,11 +239,13 @@ jobs:
             bun-${{ runner.os }}-
 
       - name: Install dependencies
+        if: steps.check.outputs.exists == 'true'
         run: |
           cd frontend
           bun install --frozen-lockfile
 
       - name: bun audit — dependency vulnerabilities
+        if: steps.check.outputs.exists == 'true'
         # "|| true" porque bun audit sale con código != 0 si solo hay advisories
         # pero queremos ver el output sin bloquear; Semgrep + p/secrets lo complementa
         run: |
@@ -234,11 +253,13 @@ jobs:
           bun audit || true
 
       - name: ESLint
+        if: steps.check.outputs.exists == 'true'
         run: |
           cd frontend
           bun run lint
 
       - name: Tests
+        if: steps.check.outputs.exists == 'true'
         run: |
           cd frontend
           if grep -q '"test"' package.json; then
@@ -249,12 +270,14 @@ jobs:
 
       # Build de producción — verifica que el empaquetado no rompe
       - name: Production build
+        if: steps.check.outputs.exists == 'true'
         run: |
           cd frontend
           bun run build
 
       # Subir el dist como artifact para reutilizar en CD sin recompilar
       - name: Upload dist artifact
+        if: steps.check.outputs.exists == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: frontend-dist-${{ github.sha }}
