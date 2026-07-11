@@ -12,8 +12,8 @@ export function Header() {
   };
 
   // Simulación de datos extraídos del user o defaults
-  const initials = user?.name ? user.name.substring(0, 2).toUpperCase() : 'MF';
-  const userName = user?.name || 'Administrador';
+  const userName = user?.name || (role === 'admin' ? 'Administrador' : 'Empleado');
+  const initials = userName.substring(0, 2).toUpperCase();
   const tenantName = user?.tenantName || 'Estudio Legal Fernández & Asoc.';
 
   return (

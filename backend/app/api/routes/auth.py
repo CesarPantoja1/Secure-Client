@@ -3,7 +3,7 @@ import jwt
 import logging
 from fastapi import APIRouter, Request, Response, HTTPException
 from app.schemas.auth import LoginRequest, LoginResponse
-from app.services.supabase import supabase_client, safe_supabase_call
+from app.services.supabase import supabase_client, supabase_admin_client, safe_supabase_call
 from app.core.exceptions import SCMException
 from app.core.rate_limit import limiter
 
@@ -74,11 +74,45 @@ def get_me(request: Request):
             app_metadata = payload.get("app_metadata", {})
             role = app_metadata.get("role", "empleado")
 
+        user_id = payload.get("sub")
+        tenant_id = payload.get("app_metadata", {}).get("tenant_id")
+
+        name = None
+        tenant_name = None
+
+        if user_id:
+            try:
+                user_res = safe_supabase_call(
+                    supabase_admin_client.table("users")
+                    .select("nombre_completo")
+                    .eq("id", user_id)
+                    .execute
+                )
+                if user_res.data:
+                    name = user_res.data[0].get("nombre_completo")
+            except Exception as e:
+                logger.error(f"Error fetching user name from DB: {e}")
+
+        if tenant_id:
+            try:
+                tenant_res = safe_supabase_call(
+                    supabase_admin_client.table("tenants")
+                    .select("nombre")
+                    .eq("id", tenant_id)
+                    .execute
+                )
+                if tenant_res.data:
+                    tenant_name = tenant_res.data[0].get("nombre")
+            except Exception as e:
+                logger.error(f"Error fetching tenant name from DB: {e}")
+
         return {
-            "user_id": payload.get("sub"),
+            "user_id": user_id,
             "email": payload.get("email"),
             "role": role,
-            "tenant_id": payload.get("app_metadata", {}).get("tenant_id"),
+            "tenant_id": tenant_id,
+            "name": name,
+            "tenantName": tenant_name,
         }
     except jwt.InvalidTokenError as e:
         logger.warning("JWT decode failed in get_me: %s - %s", type(e).__name__, str(e))
