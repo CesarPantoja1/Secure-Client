@@ -1,9 +1,12 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
+import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import LoginPage from "./pages/LoginPage";
+import AdminTenantsPage from "./pages/AdminTenantsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function DashboardPlaceholder() {
+  const { user } = useAuth();
+
   return (
     <div className="dashboard-placeholder">
       <div className="dashboard-placeholder__card">
@@ -31,6 +34,13 @@ function DashboardPlaceholder() {
           Bienvenido al panel de administración. Esta sección está en construcción.
         </p>
         <span className="dashboard-placeholder__badge">En desarrollo</span>
+        {user?.role === "admin" && (
+          <div style={{ marginTop: "24px" }}>
+            <Link to="/admin/tenants" className="btn-primary" style={{ padding: "12px 24px", textDecoration: "none", display: "inline-block", borderRadius: "6px", background: "var(--color-primary-600)", color: "#fff", fontWeight: "600" }}>
+              Ir a Administración de Tenants
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -47,6 +57,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <DashboardPlaceholder />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/tenants"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminTenantsPage />
               </ProtectedRoute>
             }
           />

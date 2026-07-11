@@ -5,8 +5,8 @@ import { useAuth } from "../contexts/AuthContext";
  * Wraps a route so only authenticated users can access it.
  * While the initial auth check runs, shows a loading spinner.
  */
-export default function ProtectedRoute({ children }) {
-  const { isAuthenticated, loading } = useAuth();
+export default function ProtectedRoute({ children, requiredRole }) {
+  const { user, isAuthenticated, loading } = useAuth();
 
   if (loading) {
     return (
@@ -19,6 +19,10 @@ export default function ProtectedRoute({ children }) {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (requiredRole && user?.role !== requiredRole) {
+    return <Navigate to="/" replace />;
   }
 
   return children;
