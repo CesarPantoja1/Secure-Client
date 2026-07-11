@@ -32,6 +32,20 @@ def login(request: Request, response: Response, req: LoginRequest):
     if not auth_res.session:
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
 
+    # Verificar si el usuario está activo
+    try:
+        user_data = safe_supabase_call(
+            supabase_admin_client.table("users").select("activo").eq("id", auth_res.user.id).execute
+        )
+        if user_data.data and not user_data.data[0].get("activo", True):
+            # Si está explícitamente desactivado
+            raise HTTPException(status_code=401, detail="Cuenta desactivada")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error verificando estado activo: {e}")
+        raise HTTPException(status_code=500, detail="Error interno verificando estado")
+
     # Set cookies
     response.set_cookie(
         key="scm_access_token",
