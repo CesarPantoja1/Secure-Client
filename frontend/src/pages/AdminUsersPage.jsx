@@ -18,13 +18,23 @@ export default function AdminUsersPage() {
       const data = await execute(`/api/admin/users?page=${currentPage}&page_size=${pageSize}`);
       setUsers(data.users || []);
       setTotal(data.total || 0);
-    } catch (err) {
+    } catch {
       // Manejado por useApi / ErrorNotification
     }
   }, [execute, pageSize]);
 
   useEffect(() => {
-    fetchUsers(page);
+    let active = true;
+    const load = async () => {
+      await Promise.resolve(); // Defer state update to avoid calling setState synchronously in effect body
+      if (active) {
+        fetchUsers(page);
+      }
+    };
+    load();
+    return () => {
+      active = false;
+    };
   }, [fetchUsers, page]);
 
   const handleNextPage = () => { if (page * pageSize < total) setPage(page + 1); };
