@@ -64,11 +64,6 @@ def get_me(request: Request):
         raise HTTPException(status_code=401, detail="No autenticado")
 
     try:
-        try:
-            unverified_header = jwt.get_unverified_header(token)
-            logger.info("Unverified token header in get_me: %s", unverified_header)
-        except Exception as ex:
-            logger.error("Failed to parse token header in get_me: %s", ex)
         payload = decode_supabase_token(token)
 
         # Extract role
