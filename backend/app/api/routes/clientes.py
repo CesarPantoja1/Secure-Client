@@ -1,1 +1,190 @@
-"""Clientes routes placeholder."""
+from datetime import datetime
+from fastapi import APIRouter, Depends, Query, Request
+from app.core.rate_limit import limiter
+from app.schemas.auth import AuthContext
+from app.dependencies.auth import get_auth_context, require_admin
+from app.schemas.clientes import (
+    CreateClienteRequest,
+    UpdateClienteRequest,
+    ClienteResponse,
+    ClienteListResponse,
+)
+from app.services.supabase import supabase_client, safe_supabase_call
+from app.services.encryption import encrypt_field, decrypt_field, get_encryption_key
+from app.core.exceptions import SCMException
+
+router = APIRouter(tags=["clientes"])
+
+
+def serialize_bytea(data: bytes) -> str:
+    """Convierte bytes a formato hexadecimal admitido por PostgreSQL bytea"""
+    return f"\\x{data.hex()}"
+
+
+def deserialize_bytea(data: str) -> bytes:
+    """Convierte formato bytea string de PostgREST de regreso a bytes"""
+    if data.startswith("\\x"):
+        return bytes.fromhex(data[2:])
+    return bytes.fromhex(data)
+
+
+@router.get("/clientes", response_model=ClienteListResponse)
+@limiter.limit("100/minute")
+async def get_clientes(
+    request: Request,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    search: str = Query(None),
+    auth_context: AuthContext = Depends(get_auth_context),
+):
+    tenant_id = auth_context.tenant_id
+
+    query = (
+        supabase_client.table("clientes")
+        .select("*", count="exact")
+        .eq("tenant_id", tenant_id)
+    )
+    if search:
+        query = query.ilike("nombre", f"%{search}%")
+
+    offset = (page - 1) * page_size
+    query = query.range(offset, offset + page_size - 1)
+
+    response = safe_supabase_call(query.execute)
+    items = response.data
+    total = response.count if response.count is not None else 0
+
+    key = get_encryption_key()
+    for item in items:
+        if item.get("notas_sensibles"):
+            encrypted_bytes = deserialize_bytea(item["notas_sensibles"])
+            item["notas_sensibles"] = decrypt_field(encrypted_bytes, key)
+
+    return ClienteListResponse(items=items, total=total, page=page, page_size=page_size)
+
+
+@router.get("/clientes/{id}", response_model=ClienteResponse)
+@limiter.limit("100/minute")
+async def get_cliente(
+    request: Request, id: str, auth_context: AuthContext = Depends(get_auth_context)
+):
+    response = safe_supabase_call(
+        supabase_client.table("clientes")
+        .select("*")
+        .eq("id", id)
+        .eq("tenant_id", auth_context.tenant_id)
+        .execute
+    )
+    if not response.data:
+        raise SCMException("Cliente no encontrado", status_code=404, code="not_found")
+
+    item = response.data[0]
+    if item.get("notas_sensibles"):
+        key = get_encryption_key()
+        encrypted_bytes = deserialize_bytea(item["notas_sensibles"])
+        item["notas_sensibles"] = decrypt_field(encrypted_bytes, key)
+
+    return item
+
+
+@router.post("/clientes", response_model=ClienteResponse)
+@limiter.limit("100/minute")
+async def create_cliente(
+    request: Request,
+    payload: CreateClienteRequest,
+    auth_context: AuthContext = Depends(get_auth_context),
+):
+    data = payload.model_dump(exclude_unset=True)
+    data["tenant_id"] = auth_context.tenant_id
+    data["created_by"] = auth_context.user_id
+
+    if data.get("notas_sensibles"):
+        key = get_encryption_key()
+        encrypted_bytes = encrypt_field(data["notas_sensibles"], key)
+        data["notas_sensibles"] = serialize_bytea(encrypted_bytes)
+
+    response = safe_supabase_call(
+        supabase_client.table("clientes").insert(data).execute
+    )
+
+    item = response.data[0]
+    if item.get("notas_sensibles"):
+        key = get_encryption_key()
+        encrypted_bytes = deserialize_bytea(item["notas_sensibles"])
+        item["notas_sensibles"] = decrypt_field(encrypted_bytes, key)
+
+    return item
+
+
+@router.put("/clientes/{id}", response_model=ClienteResponse)
+@limiter.limit("100/minute")
+async def update_cliente(
+    request: Request,
+    id: str,
+    payload: UpdateClienteRequest,
+    auth_context: AuthContext = Depends(get_auth_context),
+):
+    check = safe_supabase_call(
+        supabase_client.table("clientes")
+        .select("id")
+        .eq("id", id)
+        .eq("tenant_id", auth_context.tenant_id)
+        .execute
+    )
+    if not check.data:
+        raise SCMException("Cliente no encontrado", status_code=404, code="not_found")
+
+    data = payload.model_dump(exclude_unset=True)
+    if not data:
+        return await get_cliente(request, id, auth_context)
+
+    if "notas_sensibles" in data and data["notas_sensibles"] is not None:
+        key = get_encryption_key()
+        encrypted_bytes = encrypt_field(data["notas_sensibles"], key)
+        data["notas_sensibles"] = serialize_bytea(encrypted_bytes)
+    elif "notas_sensibles" in data and data["notas_sensibles"] is None:
+        data["notas_sensibles"] = None
+
+    data["updated_at"] = datetime.utcnow().isoformat()
+
+    response = safe_supabase_call(
+        supabase_client.table("clientes")
+        .update(data)
+        .eq("id", id)
+        .eq("tenant_id", auth_context.tenant_id)
+        .execute
+    )
+
+    item = response.data[0]
+    if item.get("notas_sensibles"):
+        key = get_encryption_key()
+        encrypted_bytes = deserialize_bytea(item["notas_sensibles"])
+        item["notas_sensibles"] = decrypt_field(encrypted_bytes, key)
+
+    return item
+
+
+@router.delete("/clientes/{id}")
+@limiter.limit("100/minute")
+async def delete_cliente(
+    request: Request, id: str, auth_context: AuthContext = Depends(require_admin)
+):
+    check = safe_supabase_call(
+        supabase_client.table("clientes")
+        .select("id")
+        .eq("id", id)
+        .eq("tenant_id", auth_context.tenant_id)
+        .execute
+    )
+    if not check.data:
+        raise SCMException("Cliente no encontrado", status_code=404, code="not_found")
+
+    safe_supabase_call(
+        supabase_client.table("clientes")
+        .delete()
+        .eq("id", id)
+        .eq("tenant_id", auth_context.tenant_id)
+        .execute
+    )
+
+    return {"success": True, "message": "Cliente eliminado"}
