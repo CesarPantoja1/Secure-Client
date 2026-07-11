@@ -35,7 +35,10 @@ def login(request: Request, response: Response, req: LoginRequest):
     # Verificar si el usuario está activo
     try:
         user_data = safe_supabase_call(
-            supabase_admin_client.table("users").select("activo").eq("id", auth_res.user.id).execute
+            supabase_admin_client.table("users")
+            .select("activo")
+            .eq("id", auth_res.user.id)
+            .execute
         )
         if user_data.data and not user_data.data[0].get("activo", True):
             # Si está explícitamente desactivado
