@@ -1,9 +1,22 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import LoginPage from "./pages/LoginPage";
+import AdminTenantsPage from "./pages/AdminTenantsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Layout from "./components/Layout";
+
+// Placeholders para páginas no implementadas
+const AdminUsersPage = () => <div style={{padding: 20}}><h2>Admin Usuarios - En construcción</h2></div>;
+const ClientesListPage = () => <div style={{padding: 20}}><h2>Clientes - En construcción</h2></div>;
+const ClienteFormPage = () => <div style={{padding: 20}}><h2>Formulario de Cliente - En construcción</h2></div>;
+const ClienteDetailPage = () => <div style={{padding: 20}}><h2>Detalle de Cliente - En construcción</h2></div>;
+const TareasListPage = () => <div style={{padding: 20}}><h2>Tareas - En construcción</h2></div>;
+const TareaFormPage = () => <div style={{padding: 20}}><h2>Formulario de Tarea - En construcción</h2></div>;
+const AuditoriaPage = () => <div style={{padding: 20}}><h2>Auditoría - En construcción</h2></div>;
+const NotasPage = () => <div style={{padding: 20}}><h2>Notas - En construcción</h2></div>;
 
 function DashboardPlaceholder() {
+
   return (
     <div className="dashboard-placeholder">
       <div className="dashboard-placeholder__card">
@@ -28,7 +41,7 @@ function DashboardPlaceholder() {
         </div>
         <h1 className="dashboard-placeholder__title">Dashboard</h1>
         <p className="dashboard-placeholder__subtitle">
-          Bienvenido al panel de administración. Esta sección está en construcción.
+          Bienvenido al panel principal. Esta sección está en construcción.
         </p>
         <span className="dashboard-placeholder__badge">En desarrollo</span>
       </div>
@@ -42,14 +55,43 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
-          <Route
-            path="/"
+          
+          {/* Rutas protegidas genéricas (empleado y admin) */}
+          <Route 
             element={
               <ProtectedRoute>
-                <DashboardPlaceholder />
+                <Layout>
+                  <Outlet />
+                </Layout>
               </ProtectedRoute>
             }
-          />
+          >
+            <Route path="/" element={<DashboardPlaceholder />} />
+            <Route path="/clientes" element={<ClientesListPage />} />
+            <Route path="/clientes/nuevo" element={<ClienteFormPage />} />
+            <Route path="/clientes/:id" element={<ClienteDetailPage />} />
+            <Route path="/clientes/:id/editar" element={<ClienteFormPage />} />
+            <Route path="/tareas" element={<TareasListPage />} />
+            <Route path="/tareas/nueva" element={<TareaFormPage />} />
+            <Route path="/tareas/:id/editar" element={<TareaFormPage />} />
+            <Route path="/notas" element={<NotasPage />} />
+          </Route>
+
+          {/* Rutas protegidas exclusivas (solo admin) */}
+          <Route 
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <Layout>
+                  <Outlet />
+                </Layout>
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/admin/tenants" element={<AdminTenantsPage />} />
+            <Route path="/admin/users" element={<AdminUsersPage />} />
+            <Route path="/auditoria" element={<AuditoriaPage />} />
+          </Route>
+
           {/* Catch-all redirect */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

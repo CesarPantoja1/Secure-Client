@@ -1,6 +1,9 @@
 name: CD - VM Deploy
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       environment:
@@ -87,7 +90,7 @@ jobs:
             "set -euo pipefail
              cd '$DEPLOY_PATH'
              docker compose ps --format json >/tmp/secureclient-compose.json
-             docker compose exec -T backend sh -c 'command -v curl >/dev/null && curl --fail --silent --show-error --max-time 10 http://localhost:8000/health || true'"
+             docker compose exec -T backend sh -c 'command -v curl >/dev/null && curl --fail --silent --show-error --max-time 10 http://localhost:8000/api/health || true'"
 
           if [[ -n "$HEALTHCHECK_URL" ]]; then
             curl --fail --silent --show-error --max-time 20 "$HEALTHCHECK_URL"
