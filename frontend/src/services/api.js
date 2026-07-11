@@ -26,7 +26,7 @@ export function getCsrfToken() {
 }
 
 export async function apiRequest(path, options = {}) {
-  const { method = 'GET', headers = {}, ...rest } = options;
+  const { method = 'GET', headers = {}, body, ...rest } = options;
   
   const requestHeaders = {
     'Content-Type': 'application/json',
@@ -47,6 +47,7 @@ export async function apiRequest(path, options = {}) {
       method: methodUpper,
       headers: requestHeaders,
       credentials: 'same-origin',
+      ...(body ? { body: JSON.stringify(body) } : {}),
       ...rest,
     });
   } catch {
