@@ -1,8 +1,14 @@
 import os
 import pytest
 
-if not os.environ.get("SUPABASE_URL") or os.environ.get("SUPABASE_URL") == "https://dummy.supabase.co":
-    pytest.skip("Se requiere SUPABASE_URL real para la prueba de integración", allow_module_level=True)
+if (
+    not os.environ.get("SUPABASE_URL")
+    or os.environ.get("SUPABASE_URL") == "https://dummy.supabase.co"
+):
+    pytest.skip(
+        "Se requiere SUPABASE_URL real para la prueba de integración",
+        allow_module_level=True,
+    )
 
 import uuid
 import time
