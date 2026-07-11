@@ -1,0 +1,59 @@
+import logging
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
+from starlette.middleware.cors import CORSMiddleware
+from starlette.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+from app.core.config import settings
+from app.core.exceptions import (
+    ConflictError,
+    ForbiddenError,
+    NotFoundError,
+    SCMException,
+    general_exception_handler,
+    http_exception_handler,
+    request_validation_exception_handler,
+    scm_exception_handler,
+)
+
+# Configuración de Logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+)
+logger = logging.getLogger("scm.backend")
+
+
+# Definición del ciclo de vida (Lifespan) que reemplaza a on_event
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Esto ejecuta al iniciar el backend (antiguo startup)
+    logger.info("SCM backend started")
+    yield
+    # Aquí puedes agregar código si necesitas limpiar recursos al apagar (shutdown)
+
+
+# Inicialización de FastAPI con lifespan
+app = FastAPI(title="SCM Backend", version="0.1.0", lifespan=lifespan)
+
+# Middleware de CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Manejadores de Excepciones
+app.add_exception_handler(RequestValidationError, request_validation_exception_handler)
+app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+app.add_exception_handler(SCMException, scm_exception_handler)
+app.add_exception_handler(Exception, general_exception_handler)
+
+
+@app.get("/api/health")
+def health_check() -> dict[str, str]:
+    return {"status": "ok"}
