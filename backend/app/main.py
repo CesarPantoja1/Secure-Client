@@ -7,7 +7,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.core.rate_limit import limiter
-from app.api.routes import auth
+from app.api.routes import auth, admin
 from app.middleware.csrf import CSRFMiddleware
 
 from app.core.config import settings
@@ -58,6 +58,7 @@ app.add_exception_handler(Exception, general_exception_handler)
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.include_router(auth.router)
+app.include_router(admin.router)
 
 
 @app.get("/api/health")
