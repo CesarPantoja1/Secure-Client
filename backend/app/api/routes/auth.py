@@ -64,7 +64,7 @@ def get_me(request: Request):
             token,
             settings.supabase_jwt_secret,
             algorithms=["HS256"],
-            audience="authenticated"
+            audience="authenticated",
         )
         return {
             "user_id": payload.get("sub"),
