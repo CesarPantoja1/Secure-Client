@@ -41,12 +41,19 @@ export function AuthProvider({ children }) {
   }, [checkAuth]);
 
   /**
-   * Placeholder logout — clears local state.
-   * A real implementation would call a /api/logout endpoint.
+   * Logout function.
+   * Calls /api/logout, clears local state, and redirects.
    */
-  const logout = useCallback(() => {
-    setUser(null);
-    setIsAuthenticated(false);
+  const logout = useCallback(async () => {
+    try {
+      await apiRequest("/api/logout", { method: "POST" });
+    } catch (e) {
+      console.error("Error during logout", e);
+    } finally {
+      setUser(null);
+      setIsAuthenticated(false);
+      window.location.href = "/login";
+    }
   }, []);
 
   // On first mount, check for existing session

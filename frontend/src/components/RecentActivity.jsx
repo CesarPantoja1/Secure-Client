@@ -1,4 +1,4 @@
-/* eslint-disable */
+ 
 import styles from './RecentActivity.module.css';
 
 const ACTION_ICONS = {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import ErrorNotification from "../components/ErrorNotification";
 
@@ -12,7 +12,10 @@ const ROLES = [
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
+  
+  const infoMessage = location.state?.message;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -106,6 +109,18 @@ export default function LoginPage() {
               Acceso restringido. Se registrará su IP y user-agent.
             </p>
           </div>
+
+          {/* Session expiration or info message */}
+          {infoMessage && (
+            <div className="login-info-banner">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <span>{infoMessage}</span>
+            </div>
+          )}
 
           {/* Error notification */}
           {error && (

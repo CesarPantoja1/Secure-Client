@@ -1,32 +1,6 @@
--- Migración: Crear sistema de auditoría y no repudio
--- Creado: 2026-07-12
+-- Migración para arreglar el tipo json a jsonb y evitar el error: operator does not exist: json ? unknown
 
--- 1. Crear tabla audit_logs
-CREATE TABLE IF NOT EXISTS audit_logs (
-    id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    tenant_id uuid REFERENCES tenants(id) ON DELETE CASCADE,
-    user_id uuid,
-    user_email text,
-    accion text NOT NULL,
-    tabla_afectada text NOT NULL,
-    datos_anteriores jsonb,
-    datos_nuevos jsonb,
-    ip_origen inet,
-    user_agent text,
-    timestamp timestamptz NOT NULL DEFAULT now(),
-    hash_integridad text,
-    hash_anterior text,
-    exported boolean NOT NULL DEFAULT false
-);
-
--- 2. Índices para optimizar búsquedas y auditoría
-CREATE INDEX IF NOT EXISTS audit_logs_tenant_id_idx ON audit_logs(tenant_id);
-CREATE INDEX IF NOT EXISTS audit_logs_user_id_idx ON audit_logs(user_id);
-CREATE INDEX IF NOT EXISTS audit_logs_accion_idx ON audit_logs(accion);
-CREATE INDEX IF NOT EXISTS audit_logs_timestamp_idx ON audit_logs(timestamp DESC);
-CREATE INDEX IF NOT EXISTS audit_logs_exported_idx ON audit_logs(exported);
-
--- 3. Función para calcular el hash de integridad encadenado (BEFORE INSERT ON audit_logs)
+-- 1. Reemplazar fn_hash_audit_log
 CREATE OR REPLACE FUNCTION fn_hash_audit_log()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -34,13 +8,13 @@ DECLARE
     v_payload text;
     v_secret text;
     v_headers_text text;
-    v_headers json;
+    v_headers jsonb;
 BEGIN
     -- Intentar obtener la clave HMAC de las cabeceras HTTP de PostgREST
     v_headers_text := current_setting('request.headers', true);
     IF v_headers_text IS NOT NULL AND v_headers_text <> '' THEN
         BEGIN
-            v_headers := v_headers_text::json;
+            v_headers := v_headers_text::jsonb;
         EXCEPTION WHEN OTHERS THEN
             v_headers := NULL;
         END;
@@ -89,14 +63,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Trigger para hashing en la inserción en audit_logs
-DROP TRIGGER IF EXISTS hash_audit_log_trigger ON audit_logs;
-CREATE TRIGGER hash_audit_log_trigger
-BEFORE INSERT ON audit_logs
-FOR EACH ROW EXECUTE FUNCTION fn_hash_audit_log();
 
-
--- 4. Función de auditoría en tablas de negocio (clientes, tareas, notas_reunion, users)
+-- 2. Reemplazar fn_audit_log en tablas de negocio
 CREATE OR REPLACE FUNCTION fn_audit_log()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -110,9 +78,9 @@ DECLARE
     v_datos_anteriores jsonb;
     v_datos_nuevos jsonb;
     v_headers_text text;
-    v_headers json;
+    v_headers jsonb;
     v_claims_text text;
-    v_jwt_claims json;
+    v_jwt_claims jsonb;
 BEGIN
     v_accion := TG_OP;
     v_tabla_afectada := TG_TABLE_NAME::text;
@@ -136,7 +104,7 @@ BEGIN
     v_headers_text := current_setting('request.headers', true);
     IF v_headers_text IS NOT NULL AND v_headers_text <> '' THEN
         BEGIN
-            v_headers := v_headers_text::json;
+            v_headers := v_headers_text::jsonb;
         EXCEPTION WHEN OTHERS THEN
             v_headers := NULL;
         END;
@@ -146,7 +114,7 @@ BEGIN
     v_claims_text := current_setting('request.jwt.claims', true);
     IF v_claims_text IS NOT NULL AND v_claims_text <> '' THEN
         BEGIN
-            v_jwt_claims := v_claims_text::json;
+            v_jwt_claims := v_claims_text::jsonb;
         EXCEPTION WHEN OTHERS THEN
             v_jwt_claims := NULL;
         END;
@@ -219,43 +187,3 @@ BEGIN
     END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
-
--- 5. Crear Triggers en Tablas de Negocio
--- Clientes
-DROP TRIGGER IF EXISTS audit_clientes_trigger ON clientes;
-CREATE TRIGGER audit_clientes_trigger
-AFTER INSERT OR UPDATE OR DELETE ON clientes
-FOR EACH ROW EXECUTE FUNCTION fn_audit_log();
-
--- Tareas
-DROP TRIGGER IF EXISTS audit_tareas_trigger ON tareas;
-CREATE TRIGGER audit_tareas_trigger
-AFTER INSERT OR UPDATE OR DELETE ON tareas
-FOR EACH ROW EXECUTE FUNCTION fn_audit_log();
-
--- Notas de Reunión
-DROP TRIGGER IF EXISTS audit_notas_reunion_trigger ON notas_reunion;
-CREATE TRIGGER audit_notas_reunion_trigger
-AFTER INSERT OR UPDATE OR DELETE ON notas_reunion
-FOR EACH ROW EXECUTE FUNCTION fn_audit_log();
-
--- Usuarios (users)
-DROP TRIGGER IF EXISTS audit_users_trigger ON users;
-CREATE TRIGGER audit_users_trigger
-AFTER INSERT OR UPDATE OR DELETE ON users
-FOR EACH ROW EXECUTE FUNCTION fn_audit_log();
-
-
--- 6. Habilitar Row Level Security (RLS) en audit_logs
-ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Solo admin del tenant puede ver audit_logs" ON audit_logs;
-
-CREATE POLICY "Solo admin del tenant puede ver audit_logs"
-ON audit_logs FOR SELECT
-TO authenticated
-USING (
-    (auth.jwt() ->> 'tenant_id') = tenant_id::text
-    AND (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
-);
