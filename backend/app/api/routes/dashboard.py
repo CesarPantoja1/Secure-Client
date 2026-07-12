@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Request
 from datetime import datetime
-from typing import List, Optional, Any
+from typing import List, Optional
 
 from app.schemas.dashboard import DashboardResponse, RecentActivity
 from app.dependencies.auth import get_auth_context, AuthContext
@@ -14,7 +14,6 @@ def generar_descripcion(accion: str, tabla: str) -> str:
     tabla_lower = tabla.lower()
     
     if accion_upper == "INSERT":
-        verbo = "Creó un nuevo registro en"
         if tabla_lower == "clientes":
             return "Creó un nuevo cliente"
         elif tabla_lower == "tareas":
@@ -23,7 +22,6 @@ def generar_descripcion(accion: str, tabla: str) -> str:
             return "Creó una nota de reunión"
             
     elif accion_upper == "UPDATE":
-        verbo = "Actualizó un registro en"
         if tabla_lower == "clientes":
             return "Actualizó un cliente"
         elif tabla_lower == "tareas":
@@ -32,7 +30,6 @@ def generar_descripcion(accion: str, tabla: str) -> str:
             return "Actualizó una nota de reunión"
             
     elif accion_upper == "DELETE":
-        verbo = "Eliminó un registro en"
         if tabla_lower == "clientes":
             return "Eliminó un cliente"
         elif tabla_lower == "tareas":
