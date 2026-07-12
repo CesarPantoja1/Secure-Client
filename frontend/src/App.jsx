@@ -11,7 +11,7 @@ import ClientesListPage from "./pages/ClientesListPage";
 import ClienteFormPage from "./pages/ClienteFormPage";
 import ClienteDetailPage from "./pages/ClienteDetailPage";
 
-const TareasListPage = () => <div style={{padding: 20}}><h2>Tareas - En construcción</h2></div>;
+import TareasListPage from "./pages/TareasListPage";
 const TareaFormPage = () => <div style={{padding: 20}}><h2>Formulario de Tarea - En construcción</h2></div>;
 const AuditoriaPage = () => <div style={{padding: 20}}><h2>Auditoría - En construcción</h2></div>;
 const NotasPage = () => <div style={{padding: 20}}><h2>Notas - En construcción</h2></div>;
