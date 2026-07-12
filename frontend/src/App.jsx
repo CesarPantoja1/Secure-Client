@@ -10,9 +10,7 @@ import AdminUsersPage from "./pages/AdminUsersPage";
 import ClientesListPage from "./pages/ClientesListPage";
 import ClienteFormPage from "./pages/ClienteFormPage";
 import ClienteDetailPage from "./pages/ClienteDetailPage";
-
 import TareasListPage from "./pages/TareasListPage";
-const TareaFormPage = () => <div style={{padding: 20}}><h2>Formulario de Tarea - En construcción</h2></div>;
 const AuditoriaPage = () => <div style={{padding: 20}}><h2>Auditoría - En construcción</h2></div>;
 const NotasPage = () => <div style={{padding: 20}}><h2>Notas - En construcción</h2></div>;
 
@@ -73,8 +71,6 @@ function App() {
             <Route path="/clientes/:id" element={<ClienteDetailPage />} />
             <Route path="/clientes/:id/editar" element={<ClienteFormPage />} />
             <Route path="/tareas" element={<TareasListPage />} />
-            <Route path="/tareas/nueva" element={<TareaFormPage />} />
-            <Route path="/tareas/:id/editar" element={<TareaFormPage />} />
             <Route path="/notas" element={<NotasPage />} />
           </Route>
 
