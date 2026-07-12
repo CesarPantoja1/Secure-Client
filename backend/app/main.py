@@ -7,7 +7,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from slowapi import _rate_limit_exceeded_handler  # type: ignore
 from slowapi.errors import RateLimitExceeded  # type: ignore
 from app.core.rate_limit import limiter
-from app.api.routes import auth, admin, clientes, tareas
+from app.api.routes import auth, admin, clientes, tareas, notas
 from app.middleware.csrf import CSRFMiddleware
 
 from app.core.config import settings
@@ -61,7 +61,7 @@ app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(clientes.router, prefix="/api")
 app.include_router(tareas.router, prefix="/api")
-
+app.include_router(notas.router, prefix="/api")
 
 @app.get("/api/health")
 def health_check() -> dict[str, str]:
