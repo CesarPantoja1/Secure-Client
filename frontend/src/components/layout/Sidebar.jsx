@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Lock, LayoutDashboard, Users, CheckSquare, FileText, Shield, Settings } from "./Icons";
+import { Lock, LayoutDashboard, Users, CheckSquare, Shield, Settings } from "./Icons";
 
 export function Sidebar({ role }) {
   return (
@@ -32,10 +32,7 @@ export function Sidebar({ role }) {
               <CheckSquare />
               <span>Tareas</span>
             </NavLink>
-            <NavLink to="/notas" className={({ isActive }) => `app-sidebar__link ${isActive ? 'active' : ''}`}>
-              <FileText />
-              <span>Notas de Reunión</span>
-            </NavLink>
+
           </nav>
         </div>
 

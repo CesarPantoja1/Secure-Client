@@ -118,7 +118,7 @@ def export_logs_to_s3():
 
         # Inject context headers so the before insert trigger calculates hash correctly
         query = supabase_admin_client.table("audit_logs").insert(export_event)
-        query.headers["x-audit-hmac-secret"] = settings.audit_hmac_secret
+        query.request.headers["x-audit-hmac-secret"] = settings.audit_hmac_secret
         safe_supabase_call(query.execute)
         logger.info("Evento AUDIT_EXPORT registrado en el log de auditoría.")
 
