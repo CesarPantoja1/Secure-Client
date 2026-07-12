@@ -2,11 +2,13 @@ from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 from datetime import datetime
 
+
 class MetricCard(BaseModel):
     title: str
     value: int
     icon: str
     color: str
+
 
 class RecentActivity(BaseModel):
     id: int
@@ -14,6 +16,7 @@ class RecentActivity(BaseModel):
     tabla_afectada: str
     timestamp: datetime
     descripcion: str
+
 
 class DashboardResponse(BaseModel):
     total_clientes: int
