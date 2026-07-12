@@ -32,10 +32,7 @@ export function Sidebar({ role }) {
               <CheckSquare />
               <span>Tareas</span>
             </NavLink>
-            <NavLink to="/notas" className={({ isActive }) => `app-sidebar__link ${isActive ? 'active' : ''}`}>
-              <FileText />
-              <span>Notas de Reunión</span>
-            </NavLink>
+
           </nav>
         </div>
 

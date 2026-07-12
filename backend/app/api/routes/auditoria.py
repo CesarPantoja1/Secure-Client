@@ -60,12 +60,12 @@ async def get_auditoria(
     if "x-forwarded-for" in request.headers:
         client_ip = request.headers["x-forwarded-for"].split(",")[0].strip()
 
-    query.headers["x-audit-user-id"] = str(auth_context.user_id)
-    query.headers["x-audit-user-email"] = auth_context.email
-    query.headers["x-audit-ip"] = client_ip
-    query.headers["x-audit-user-agent"] = request.headers.get("user-agent", "")
-    query.headers["x-audit-tenant-id"] = str(auth_context.tenant_id)
-    query.headers["x-audit-hmac-secret"] = settings.audit_hmac_secret
+    query.request.headers["x-audit-user-id"] = str(auth_context.user_id)
+    query.request.headers["x-audit-user-email"] = auth_context.email
+    query.request.headers["x-audit-ip"] = client_ip
+    query.request.headers["x-audit-user-agent"] = request.headers.get("user-agent", "")
+    query.request.headers["x-audit-tenant-id"] = str(auth_context.tenant_id)
+    query.request.headers["x-audit-hmac-secret"] = settings.audit_hmac_secret
 
     response = safe_supabase_call(query.execute)
     items = response.data
@@ -102,7 +102,7 @@ async def get_auditoria(
 
     # Insertar el log de meta-auditoría
     meta_query = supabase_admin_client.table("audit_logs").insert(meta_event)
-    meta_query.headers["x-audit-hmac-secret"] = settings.audit_hmac_secret
+    meta_query.request.headers["x-audit-hmac-secret"] = settings.audit_hmac_secret
     safe_supabase_call(meta_query.execute)
 
     return {"items": items, "total": total, "page": page, "page_size": page_size}

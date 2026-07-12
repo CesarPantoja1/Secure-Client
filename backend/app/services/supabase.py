@@ -46,10 +46,10 @@ def set_session_context(
         user_email = auth_context.email if auth_context.email else "anonymous@system"
         tenant_id = str(auth_context.tenant_id) if auth_context.tenant_id else ""
 
-    query_builder.headers["x-audit-user-id"] = user_id
-    query_builder.headers["x-audit-user-email"] = user_email
-    query_builder.headers["x-audit-ip"] = ip
-    query_builder.headers["x-audit-user-agent"] = request.headers.get("user-agent", "")
-    query_builder.headers["x-audit-tenant-id"] = tenant_id
-    query_builder.headers["x-audit-hmac-secret"] = settings.audit_hmac_secret
+    query_builder.request.headers["x-audit-user-id"] = user_id
+    query_builder.request.headers["x-audit-user-email"] = user_email
+    query_builder.request.headers["x-audit-ip"] = ip
+    query_builder.request.headers["x-audit-user-agent"] = request.headers.get("user-agent", "")
+    query_builder.request.headers["x-audit-tenant-id"] = tenant_id
+    query_builder.request.headers["x-audit-hmac-secret"] = settings.audit_hmac_secret
     return query_builder
