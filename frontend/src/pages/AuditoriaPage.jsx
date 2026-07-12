@@ -7,14 +7,16 @@ import styles from "./AuditoriaPage.module.css";
 
 // Componente para visualizar la diferencia entre el estado anterior y el nuevo
 function JsonDiffViewer({ oldData, newData }) {
-  if (!oldData && !newData) return <p className={styles.noData}>Sin detalles de datos.</p>;
+  if (!oldData && !newData)
+    return <p className={styles.noData}>Sin detalles de datos.</p>;
 
   // Obtener todas las llaves exclusivas de ambos objetos
   const allKeys = Array.from(
-    new Set([...Object.keys(oldData || {}), ...Object.keys(newData || {})])
+    new Set([...Object.keys(oldData || {}), ...Object.keys(newData || {})]),
   ).filter((key) => key !== "updated_at" && key !== "created_at");
 
-  if (allKeys.length === 0) return <p className={styles.noData}>Sin campos modificados.</p>;
+  if (allKeys.length === 0)
+    return <p className={styles.noData}>Sin campos modificados.</p>;
 
   return (
     <div className={styles.diffContainer}>
@@ -75,7 +77,7 @@ function JsonDiffViewer({ oldData, newData }) {
 export default function AuditoriaPage() {
   const { execute, loading, error, clearError } = useApi();
   const { user: authUser } = useAuth();
-  
+
   // Estado para el listado de logs
   const [logs, setLogs] = useState([]);
   const [total, setTotal] = useState(0);
@@ -118,37 +120,44 @@ export default function AuditoriaPage() {
   }, []);
 
   // Cargar logs con filtros aplicados
-  const fetchLogs = useCallback(async (currentPage) => {
-    let queryParams = `page=${currentPage}&page_size=${pageSize}`;
-    if (filterUser) queryParams += `&user_id=${filterUser}`;
-    if (filterAccion) queryParams += `&accion=${filterAccion}`;
-    if (filterTabla) queryParams += `&tabla_afectada=${filterTabla}`;
-    if (filterIp) queryParams += `&ip_origen=${filterIp}`;
-    if (filterFechaDesde) queryParams += `&fecha_desde=${filterFechaDesde}`;
-    if (filterFechaHasta) queryParams += `&fecha_hasta=${filterFechaHasta}`;
+  const fetchLogs = useCallback(
+    async (currentPage) => {
+      let queryParams = `page=${currentPage}&page_size=${pageSize}`;
+      if (filterUser) queryParams += `&user_id=${filterUser}`;
+      if (filterAccion) queryParams += `&accion=${filterAccion}`;
+      if (filterTabla) queryParams += `&tabla_afectada=${filterTabla}`;
+      if (filterIp) queryParams += `&ip_origen=${filterIp}`;
+      if (filterFechaDesde) queryParams += `&fecha_desde=${filterFechaDesde}`;
+      if (filterFechaHasta) queryParams += `&fecha_hasta=${filterFechaHasta}`;
 
-    try {
-      const data = await execute(`/api/auditoria?${queryParams}`);
-      setLogs(data.items || []);
-      setTotal(data.total || 0);
-    } catch {
-      // Error manejado por useApi
-    }
-  }, [
-    execute,
-    pageSize,
-    filterUser,
-    filterAccion,
-    filterTabla,
-    filterIp,
-    filterFechaDesde,
-    filterFechaHasta
-  ]);
+      try {
+        const data = await execute(`/api/auditoria?${queryParams}`);
+        setLogs(data.items || []);
+        setTotal(data.total || 0);
+      } catch {
+        // Error manejado por useApi
+      }
+    },
+    [
+      execute,
+      pageSize,
+      filterUser,
+      filterAccion,
+      filterTabla,
+      filterIp,
+      filterFechaDesde,
+      filterFechaHasta,
+    ],
+  );
 
   // Recargar logs al cambiar filtros o página
   useEffect(() => {
-    fetchLogs(page);
-  }, [fetchLogs, page]);
+    const ejecutarCarga = async () => {
+      await fetchLogs(page);
+    };
+    ejecutarCarga();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
   // Resetear filtros
   const handleClearFilters = () => {
@@ -186,21 +195,21 @@ export default function AuditoriaPage() {
       // Como no se pide endpoint explícito de trigger manual sino una tarea programada, informamos que la tarea
       // corre automáticamente, pero ofrecemos un botón en la UI de simulación.
       await apiRequest("/api/health"); // Verificamos conexión
-      
+
       // En una implementación real, este botón llamaría a POST /api/admin/auditoria/export
       // Para efectos de prototipo, realizamos una simulación exitosa.
-      setTimeout(() => {
+      setTimeout(async () => {
         setExportMessage({
           success: true,
-          text: "Exportación manual completada con éxito. Archivo inmutable subido al bucket S3 WORM."
+          text: "Exportación manual completada con éxito. Archivo inmutable subido al bucket S3 WORM.",
         });
         setExporting(false);
-        fetchLogs(1); // recarga
+        await fetchLogs(1); // recarga
       }, 1500);
     } catch (err) {
       setExportMessage({
         success: false,
-        text: `Error al exportar logs: ${err.message}`
+        text: `Error al exportar logs: ${err.message}`,
       });
       setExporting(false);
     }
@@ -251,7 +260,10 @@ export default function AuditoriaPage() {
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
           <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
         </svg>
-        <span>Consola de Auditoría de Seguridad · Tenant {authUser?.tenantName || "SecureClient"}</span>
+        <span>
+          Consola de Auditoría de Seguridad · Tenant{" "}
+          {authUser?.tenantName || "SecureClient"}
+        </span>
       </div>
 
       {/* Header */}
@@ -259,7 +271,8 @@ export default function AuditoriaPage() {
         <div>
           <h1 className={styles.title}>Bitácora de Auditoría</h1>
           <p className={styles.subtitle}>
-            Consulta de logs criptográficos inmutables para cumplimiento normativo y no repudio.
+            Consulta de logs criptográficos inmutables para cumplimiento
+            normativo y no repudio.
           </p>
         </div>
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
@@ -271,7 +284,7 @@ export default function AuditoriaPage() {
                 backgroundColor: exportMessage.success ? "#dcfce7" : "#fee2e2",
                 padding: "6px 12px",
                 borderRadius: "6px",
-                fontWeight: 500
+                fontWeight: 500,
               }}
             >
               {exportMessage.text}
@@ -449,13 +462,19 @@ export default function AuditoriaPage() {
           <tbody>
             {loading && logs.length === 0 ? (
               <tr>
-                <td colSpan="7" style={{ textAlign: "center", padding: "2rem" }}>
+                <td
+                  colSpan="7"
+                  style={{ textAlign: "center", padding: "2rem" }}
+                >
                   Cargando logs de auditoría...
                 </td>
               </tr>
             ) : logs.length === 0 ? (
               <tr>
-                <td colSpan="7" style={{ textAlign: "center", padding: "2rem" }}>
+                <td
+                  colSpan="7"
+                  style={{ textAlign: "center", padding: "2rem" }}
+                >
                   <div className={styles.emptyState}>
                     <svg
                       className={styles.emptyStateIcon}
@@ -468,7 +487,13 @@ export default function AuditoriaPage() {
                       <path d="M12 9v4"></path>
                       <path d="M12 17h.01"></path>
                     </svg>
-                    <p style={{ fontWeight: 600, margin: "0 0 0.25rem 0", color: "#334155" }}>
+                    <p
+                      style={{
+                        fontWeight: 600,
+                        margin: "0 0 0.25rem 0",
+                        color: "#334155",
+                      }}
+                    >
                       No se encontraron registros
                     </p>
                     <p style={{ fontSize: "0.85rem", margin: 0 }}>
@@ -481,7 +506,7 @@ export default function AuditoriaPage() {
               logs.map((log) => {
                 const isExpanded = expandedRowId === log.id;
                 const formattedDate = new Date(log.timestamp).toLocaleString();
-                
+
                 return (
                   <React.Fragment key={log.id}>
                     <tr
@@ -497,8 +522,10 @@ export default function AuditoriaPage() {
                           stroke="currentColor"
                           strokeWidth="2"
                           style={{
-                            transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
-                            transition: "transform 0.2s ease"
+                            transform: isExpanded
+                              ? "rotate(90deg)"
+                              : "rotate(0deg)",
+                            transition: "transform 0.2s ease",
                           }}
                         >
                           <polyline points="9 18 15 12 9 6"></polyline>
@@ -509,53 +536,108 @@ export default function AuditoriaPage() {
                         {getUserDisplayName(log.user_id, log.user_email)}
                       </td>
                       <td>
-                        <span className={`${styles.badge} ${getAccionBadgeClass(log.accion)}`}>
+                        <span
+                          className={`${styles.badge} ${getAccionBadgeClass(log.accion)}`}
+                        >
                           <div className={styles.statusDot}></div>
                           {log.accion}
                         </span>
                       </td>
                       <td>
-                        <span className={styles.tableCol}>{log.tabla_afectada}</span>
+                        <span className={styles.tableCol}>
+                          {log.tabla_afectada}
+                        </span>
                       </td>
-                      <td className={styles.ipCol}>{log.ip_origen || "system"}</td>
+                      <td className={styles.ipCol}>
+                        {log.ip_origen || "system"}
+                      </td>
                       <td>
                         {log.exported ? (
-                          <span style={{ color: "#166534", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                          <span
+                            style={{
+                              color: "#166534",
+                              fontWeight: 600,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                            }}
+                          >
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.5"
+                            >
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
                             S3 WORM
                           </span>
                         ) : (
-                          <span style={{ color: "#64748b", fontStyle: "italic" }}>Pendiente</span>
+                          <span
+                            style={{ color: "#64748b", fontStyle: "italic" }}
+                          >
+                            Pendiente
+                          </span>
                         )}
                       </td>
                     </tr>
-                    
+
                     {/* Fila Detalle Expandida */}
                     {isExpanded && (
                       <tr>
                         <td colSpan="7" className={styles.expandedRowCell}>
                           <div className={styles.detailPanel}>
                             <div className={styles.detailHeader}>
-                              <h4 className={styles.detailTitle}>Visualización del Diferencial de Datos (Diff)</h4>
+                              <h4 className={styles.detailTitle}>
+                                Visualización del Diferencial de Datos (Diff)
+                              </h4>
                               <div className={styles.detailMeta}>
-                                Log ID: #{log.id} | User Agent: {log.user_agent || "N/A"}
+                                Log ID: #{log.id} | User Agent:{" "}
+                                {log.user_agent || "N/A"}
                               </div>
                             </div>
-                            
+
                             {/* Comparación Visual */}
-                            <JsonDiffViewer oldData={log.datos_anteriores} newData={log.datos_nuevos} />
+                            <JsonDiffViewer
+                              oldData={log.datos_anteriores}
+                              newData={log.datos_nuevos}
+                            />
 
                             {/* Detalle Hash No Repudio */}
                             <div className={styles.integrityCard}>
                               <div className={styles.integrityTitle}>
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                <svg
+                                  width="12"
+                                  height="12"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2.5"
+                                >
+                                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                </svg>
                                 Firma Criptográfica de No Repudio
                               </div>
                               <p className={styles.integrityHash}>
-                                <span className={styles.integrityLabel}>Hash Anterior:</span> {log.hash_anterior || "N/A"}
+                                <span className={styles.integrityLabel}>
+                                  Hash Anterior:
+                                </span>{" "}
+                                {log.hash_anterior || "N/A"}
                               </p>
-                              <p className={styles.integrityHash} style={{ marginTop: "4px" }}>
-                                <span className={styles.integrityLabel}>Hash Integridad (HMAC-SHA256):</span> <span style={{ color: "#a6e3a1", fontWeight: 600 }}>{log.hash_integridad || "Pendiente"}</span>
+                              <p
+                                className={styles.integrityHash}
+                                style={{ marginTop: "4px" }}
+                              >
+                                <span className={styles.integrityLabel}>
+                                  Hash Integridad (HMAC-SHA256):
+                                </span>{" "}
+                                <span
+                                  style={{ color: "#a6e3a1", fontWeight: 600 }}
+                                >
+                                  {log.hash_integridad || "Pendiente"}
+                                </span>
                               </p>
                             </div>
                           </div>
@@ -573,13 +655,22 @@ export default function AuditoriaPage() {
         {total > pageSize && (
           <div className={styles.paginationRow}>
             <span className={styles.paginationText}>
-              Mostrando {(page - 1) * pageSize + 1} a {Math.min(page * pageSize, total)} de {total} registros
+              Mostrando {(page - 1) * pageSize + 1} a{" "}
+              {Math.min(page * pageSize, total)} de {total} registros
             </span>
             <div className={styles.paginationControls}>
-              <button className={styles.pageBtn} onClick={handlePrevPage} disabled={page === 1}>
+              <button
+                className={styles.pageBtn}
+                onClick={handlePrevPage}
+                disabled={page === 1}
+              >
                 Anterior
               </button>
-              <button className={styles.pageBtn} onClick={handleNextPage} disabled={page * pageSize >= total}>
+              <button
+                className={styles.pageBtn}
+                onClick={handleNextPage}
+                disabled={page * pageSize >= total}
+              >
                 Siguiente
               </button>
             </div>
