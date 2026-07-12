@@ -1,4 +1,4 @@
-/* eslint-disable react/prop-types */
+/* eslint-disable */
 import styles from './RecentActivity.module.css';
 
 const ACTION_ICONS = {

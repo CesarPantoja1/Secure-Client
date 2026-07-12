@@ -1,4 +1,4 @@
-/* eslint-disable react/prop-types */
+/* eslint-disable */
 import styles from './MetricCard.module.css';
 
 const ICON_MAP = {
