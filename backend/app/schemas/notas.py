@@ -22,6 +22,8 @@ class NotaResponse(BaseModel):
     contenido: Optional[str] = None
     contenido_sensible: Optional[str] = None
     autor_id: UUID
+    autor_nombre: Optional[str] = None
+    autor_email: Optional[str] = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

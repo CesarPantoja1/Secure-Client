@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useApi } from '../hooks/useApi';
 import { useAuth } from '../contexts/AuthContext';
 import styles from './ClienteDetailPage.module.css';
+import NotasReunion from '../components/NotasReunion';
 
 export default function ClienteDetailPage() {
   const { id } = useParams();
@@ -11,6 +12,7 @@ export default function ClienteDetailPage() {
   const { execute, loading, error, clearError } = useApi();
 
   const [cliente, setCliente] = useState(null);
+  const [activeTab, setActiveTab] = useState('info');
 
   const fetchCliente = useCallback(async () => {
     try {
@@ -87,67 +89,72 @@ export default function ClienteDetailPage() {
         </div>
       </div>
 
-      <div className={styles.card}>
-        <div className={styles.cardSection}>
-          <h2 className={styles.sectionTitle}>Información de Contacto</h2>
-          <div className={styles.gridInfo}>
-            <div className={styles.infoGroup}>
-              <span className={styles.label}>Correo Electrónico</span>
-              <span className={styles.value}>{cliente.email || 'No especificado'}</span>
-            </div>
-            <div className={styles.infoGroup}>
-              <span className={styles.label}>Teléfono</span>
-              <span className={styles.value}>{cliente.telefono || 'No especificado'}</span>
-            </div>
-            <div className={styles.infoGroup}>
-              <span className={styles.label}>Tipo de Cliente</span>
-              <span className={styles.value}>
-                <span className={`${styles.badge} ${getBadgeClass(cliente.tipo)}`}>
-                  {cliente.tipo.charAt(0).toUpperCase() + cliente.tipo.slice(1)}
-                </span>
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {cliente.notas_sensibles && (
-          <div className={styles.cardSection}>
-            <h2 className={styles.sectionTitle}>Notas Sensibles</h2>
-            <div className={styles.sensitiveBox}>
-              <div className={styles.sensitiveHeader}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                </svg>
-                Información Confidencial Encriptada
-              </div>
-              <div className={styles.sensitiveContent}>
-                {cliente.notas_sensibles}
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className={styles.cardSection}>
-          <h2 className={styles.sectionTitle}>Metadatos</h2>
-          <div className={styles.gridInfo}>
-            <div className={styles.infoGroup}>
-              <span className={styles.label}>Creado el</span>
-              <span className={styles.value}>{new Date(cliente.created_at).toLocaleString('es-ES')}</span>
-            </div>
-            <div className={styles.infoGroup}>
-              <span className={styles.label}>Última actualización</span>
-              <span className={styles.value}>{new Date(cliente.updated_at).toLocaleString('es-ES')}</span>
-            </div>
-            <div className={styles.infoGroup}>
-              <span className={styles.label}>ID de Creador</span>
-              <span className={styles.value} style={{ fontSize: '13px', fontFamily: 'monospace' }}>
-                {cliente.created_by || 'Sistema'}
-              </span>
-            </div>
-          </div>
-        </div>
+      {/* Navegación por pestañas */}
+      <div className={styles.tabs}>
+        <button 
+          className={activeTab === 'info' ? styles.tabActive : styles.tab} 
+          onClick={() => setActiveTab('info')}
+        >
+          Información del Cliente
+        </button>
+        <button 
+          className={activeTab === 'notas' ? styles.tabActive : styles.tab} 
+          onClick={() => setActiveTab('notas')}
+        >
+          Historial de Reuniones
+        </button>
       </div>
+
+      {/* Contenido según pestaña */}
+      {activeTab === 'info' && (
+        <div className={styles.card}>
+          <div className={styles.cardSection}>
+            <h2 className={styles.sectionTitle}>Información de Contacto</h2>
+            <div className={styles.gridInfo}>
+              <div className={styles.infoGroup}>
+                <span className={styles.label}>Correo Electrónico</span>
+                <span className={styles.value}>{cliente.email || 'No especificado'}</span>
+              </div>
+              <div className={styles.infoGroup}>
+                <span className={styles.label}>Teléfono</span>
+                <span className={styles.value}>{cliente.telefono || 'No especificado'}</span>
+              </div>
+              <div className={styles.infoGroup}>
+                <span className={styles.label}>Tipo de Cliente</span>
+                <span className={styles.value}>
+                  <span className={`${styles.badge} ${getBadgeClass(cliente.tipo)}`}>
+                    {cliente.tipo.charAt(0).toUpperCase() + cliente.tipo.slice(1)}
+                  </span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.cardSection}>
+            <h2 className={styles.sectionTitle}>Metadatos</h2>
+            <div className={styles.gridInfo}>
+              <div className={styles.infoGroup}>
+                <span className={styles.label}>Creado el</span>
+                <span className={styles.value}>{new Date(cliente.created_at).toLocaleString('es-ES')}</span>
+              </div>
+              <div className={styles.infoGroup}>
+                <span className={styles.label}>Última actualización</span>
+                <span className={styles.value}>{new Date(cliente.updated_at).toLocaleString('es-ES')}</span>
+              </div>
+              <div className={styles.infoGroup}>
+                <span className={styles.label}>ID de Creador</span>
+                <span className={styles.value} style={{ fontSize: '13px', fontFamily: 'monospace' }}>
+                  {cliente.created_by || 'Sistema'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {activeTab === 'notas' && (
+        <NotasReunion clienteId={id} />
+      )}
     </div>
   );
 }

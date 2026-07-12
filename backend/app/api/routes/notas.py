@@ -72,6 +72,12 @@ async def create_nota(
     nota_creada = response.data[0]
     nota_creada["contenido_sensible"] = nota.contenido_sensible
 
+    # Rellenar con los datos del autor (del auth_context)
+    nota_creada["autor_nombre"] = (
+        auth_context.email
+    )  # Fallback si no tenemos nombre en cache
+    nota_creada["autor_email"] = auth_context.email
+
     return nota_creada
 
 
@@ -87,7 +93,7 @@ async def get_notas(
     # Obtener las notas
     response = safe_supabase_call(
         supabase_admin_client.table("notas_reunion")
-        .select("*")
+        .select("*, users(nombre_completo, email)")
         .eq("cliente_id", cliente_id)
         .eq("tenant_id", tenant_id)
         .order("created_at", desc=True)
@@ -111,5 +117,10 @@ async def get_notas(
                 nota["contenido_sensible"] = (
                     "[Error: No se pudo descifrar el contenido sensible]"
                 )
+
+        # Extraer los datos del autor de la tabla relacional
+        user_data = nota.get("users") or {}
+        nota["autor_nombre"] = user_data.get("nombre_completo") or "Usuario Desconocido"
+        nota["autor_email"] = user_data.get("email") or "sin-correo@sistema.com"
 
     return notas
