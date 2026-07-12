@@ -9,7 +9,7 @@ from app.schemas.clientes import (
     ClienteResponse,
     ClienteListResponse,
 )
-from app.services.supabase import supabase_admin_client, safe_supabase_call
+from app.services.supabase import supabase_admin_client, safe_supabase_call, set_session_context
 from app.services.encryption import encrypt_field, decrypt_field, get_encryption_key
 from app.core.exceptions import SCMException
 
@@ -49,6 +49,7 @@ async def get_clientes(
 
     offset = (page - 1) * page_size
     query = query.range(offset, offset + page_size - 1)
+    query = set_session_context(query, request, auth_context)
 
     response = safe_supabase_call(query.execute)
     items = response.data
@@ -76,13 +77,14 @@ async def get_clientes(
 async def get_cliente(
     request: Request, id: str, auth_context: AuthContext = Depends(get_auth_context)
 ):
-    response = safe_supabase_call(
+    query = (
         supabase_admin_client.table("clientes")
         .select("*")
         .eq("id", id)
         .eq("tenant_id", auth_context.tenant_id)
-        .execute
     )
+    query = set_session_context(query, request, auth_context)
+    response = safe_supabase_call(query.execute)
     if not response.data:
         raise SCMException("Cliente no encontrado", status_code=404, code="not_found")
 
@@ -120,9 +122,9 @@ async def create_cliente(
     else:
         data["notas_sensibles"] = None
 
-    response = safe_supabase_call(
-        supabase_admin_client.table("clientes").insert(data).execute
-    )
+    query = supabase_admin_client.table("clientes").insert(data)
+    query = set_session_context(query, request, auth_context)
+    response = safe_supabase_call(query.execute)
 
     item = response.data[0]
     notas_resp = item.get("notas_sensibles")
@@ -147,13 +149,14 @@ async def update_cliente(
     payload: UpdateClienteRequest,
     auth_context: AuthContext = Depends(get_auth_context),
 ):
-    check = safe_supabase_call(
+    query_check = (
         supabase_admin_client.table("clientes")
         .select("id")
         .eq("id", id)
         .eq("tenant_id", auth_context.tenant_id)
-        .execute
     )
+    query_check = set_session_context(query_check, request, auth_context)
+    check = safe_supabase_call(query_check.execute)
     if not check.data:
         raise SCMException("Cliente no encontrado", status_code=404, code="not_found")
 
@@ -172,13 +175,14 @@ async def update_cliente(
 
     data["updated_at"] = datetime.utcnow().isoformat()
 
-    response = safe_supabase_call(
+    query = (
         supabase_admin_client.table("clientes")
         .update(data)
         .eq("id", id)
         .eq("tenant_id", auth_context.tenant_id)
-        .execute
     )
+    query = set_session_context(query, request, auth_context)
+    response = safe_supabase_call(query.execute)
 
     item = response.data[0]
     notas_resp = item.get("notas_sensibles")
@@ -200,22 +204,24 @@ async def update_cliente(
 async def delete_cliente(
     request: Request, id: str, auth_context: AuthContext = Depends(require_admin)
 ):
-    check = safe_supabase_call(
+    query_check = (
         supabase_admin_client.table("clientes")
         .select("id")
         .eq("id", id)
         .eq("tenant_id", auth_context.tenant_id)
-        .execute
     )
+    query_check = set_session_context(query_check, request, auth_context)
+    check = safe_supabase_call(query_check.execute)
     if not check.data:
         raise SCMException("Cliente no encontrado", status_code=404, code="not_found")
 
-    safe_supabase_call(
+    query = (
         supabase_admin_client.table("clientes")
         .delete()
         .eq("id", id)
         .eq("tenant_id", auth_context.tenant_id)
-        .execute
     )
+    query = set_session_context(query, request, auth_context)
+    safe_supabase_call(query.execute)
 
     return {"success": True, "message": "Cliente eliminado"}

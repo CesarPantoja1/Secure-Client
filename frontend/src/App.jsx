@@ -11,7 +11,7 @@ import ClientesListPage from "./pages/ClientesListPage";
 import ClienteFormPage from "./pages/ClienteFormPage";
 import ClienteDetailPage from "./pages/ClienteDetailPage";
 import TareasListPage from "./pages/TareasListPage";
-const AuditoriaPage = () => <div style={{padding: 20}}><h2>Auditoría - En construcción</h2></div>;
+import AuditoriaPage from "./pages/AuditoriaPage";
 const NotasPage = () => <div style={{padding: 20}}><h2>Notas - En construcción</h2></div>;
 
 function DashboardPlaceholder() {

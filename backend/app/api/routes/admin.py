@@ -7,7 +7,7 @@ from app.schemas.users import (
     UserListResponse,
 )
 from app.schemas.auth import AuthContext
-from app.services.supabase import supabase_admin_client, safe_supabase_call
+from app.services.supabase import supabase_admin_client, safe_supabase_call, set_session_context
 from app.core.exceptions import ConflictError, NotFoundError, SCMException
 from app.core.rate_limit import limiter
 from app.dependencies.auth import require_admin
@@ -27,11 +27,12 @@ router = APIRouter(
 def create_tenant(request: Request, req: CreateTenantRequest):
     # Insertar el tenant usando la key de admin (service role)
     try:
-        tenant_res = safe_supabase_call(
+        query = (
             supabase_admin_client.table("tenants")
             .insert({"nombre": req.nombre_tenant, "activo": True})
-            .execute
         )
+        query = set_session_context(query, request)
+        tenant_res = safe_supabase_call(query.execute)
         if not tenant_res.data:
             raise SCMException("Error al crear tenant")
 
@@ -53,9 +54,9 @@ def create_tenant(request: Request, req: CreateTenantRequest):
         user_id = auth_res.user.id
     except Exception as e:
         # Rollback del tenant
-        safe_supabase_call(
-            supabase_admin_client.table("tenants").delete().eq("id", tenant_id).execute
-        )
+        query = supabase_admin_client.table("tenants").delete().eq("id", tenant_id)
+        query = set_session_context(query, request)
+        safe_supabase_call(query.execute)
         error_str = str(e).lower()
         if "already registered" in error_str or "already exists" in error_str:
             raise ConflictError("El email proporcionado ya está en uso")
@@ -63,26 +64,24 @@ def create_tenant(request: Request, req: CreateTenantRequest):
 
     # Insertar en la tabla pública users
     try:
-        safe_supabase_call(
-            supabase_admin_client.table("users")
-            .insert(
-                {
-                    "id": user_id,
-                    "tenant_id": tenant_id,
-                    "email": req.email_admin,
-                    "nombre_completo": req.nombre_completo_admin,
-                    "role": "admin",
-                    "activo": True,
-                }
-            )
-            .execute
+        query = supabase_admin_client.table("users").insert(
+            {
+                "id": user_id,
+                "tenant_id": tenant_id,
+                "email": req.email_admin,
+                "nombre_completo": req.nombre_completo_admin,
+                "role": "admin",
+                "activo": True,
+            }
         )
+        query = set_session_context(query, request)
+        safe_supabase_call(query.execute)
     except Exception as e:
         # Rollback usuario auth y tenant
         safe_supabase_call(supabase_admin_client.auth.admin.delete_user, user_id)
-        safe_supabase_call(
-            supabase_admin_client.table("tenants").delete().eq("id", tenant_id).execute
-        )
+        query = supabase_admin_client.table("tenants").delete().eq("id", tenant_id)
+        query = set_session_context(query, request)
+        safe_supabase_call(query.execute)
         raise SCMException(f"Error al registrar usuario en base de datos: {e}")
 
     return CreateTenantResponse(
@@ -109,23 +108,25 @@ def list_users(
     offset = (page - 1) * page_size
 
     # Obtener el total de registros del tenant
-    count_res = safe_supabase_call(
+    query_count = (
         supabase_admin_client.table("users")
         .select("id", count="exact")
         .eq("tenant_id", admin.tenant_id)
-        .execute
     )
+    query_count = set_session_context(query_count, request, admin)
+    count_res = safe_supabase_call(query_count.execute)
     total = count_res.count if count_res.count is not None else 0
 
     # Obtener la página solicitada
-    data_res = safe_supabase_call(
+    query_data = (
         supabase_admin_client.table("users")
         .select("id, email, nombre_completo, role, activo, created_at")
         .eq("tenant_id", admin.tenant_id)
         .order("created_at", desc=False)
         .range(offset, offset + page_size - 1)
-        .execute
     )
+    query_data = set_session_context(query_data, request, admin)
+    data_res = safe_supabase_call(query_data.execute)
 
     users = [UserResponse(**row) for row in (data_res.data or [])]
     return UserListResponse(users=users, total=total, page=page, page_size=page_size)
@@ -161,20 +162,18 @@ def create_user(
 
     # 2. Insertar en la tabla pública users
     try:
-        db_res = safe_supabase_call(
-            supabase_admin_client.table("users")
-            .insert(
-                {
-                    "id": user_id,
-                    "tenant_id": tenant_id,
-                    "email": req.email,
-                    "nombre_completo": req.nombre_completo,
-                    "role": req.role.value,
-                    "activo": True,
-                }
-            )
-            .execute
+        query = supabase_admin_client.table("users").insert(
+            {
+                "id": user_id,
+                "tenant_id": tenant_id,
+                "email": req.email,
+                "nombre_completo": req.nombre_completo,
+                "role": req.role.value,
+                "activo": True,
+            }
         )
+        query = set_session_context(query, request, admin)
+        db_res = safe_supabase_call(query.execute)
     except Exception as e:
         # Rollback: eliminar usuario de auth si falla la inserción en DB
         safe_supabase_call(supabase_admin_client.auth.admin.delete_user, user_id)
@@ -193,13 +192,14 @@ def update_user(
 ):
     """Actualizar rol, estado y/o nombre de un usuario del mismo tenant."""
     # Verificar que el usuario pertenece al tenant del admin
-    existing = safe_supabase_call(
+    query_existing = (
         supabase_admin_client.table("users")
         .select("id, role, activo")
         .eq("id", user_id)
         .eq("tenant_id", admin.tenant_id)
-        .execute
     )
+    query_existing = set_session_context(query_existing, request, admin)
+    existing = safe_supabase_call(query_existing.execute)
     if not existing.data:
         raise NotFoundError("Usuario no encontrado en este tenant")
 
@@ -236,13 +236,14 @@ def update_user(
             raise SCMException(f"Error al actualizar metadata de auth: {e}")
 
     # Actualizar en la tabla users
-    db_res = safe_supabase_call(
+    query = (
         supabase_admin_client.table("users")
         .update(update_data)
         .eq("id", user_id)
         .eq("tenant_id", admin.tenant_id)
-        .execute
     )
+    query = set_session_context(query, request, admin)
+    db_res = safe_supabase_call(query.execute)
 
     if not db_res.data:
         raise SCMException("Error al actualizar usuario en base de datos")
@@ -259,25 +260,27 @@ def delete_user(
 ):
     """Soft delete: marcar activo = false. NO elimina de Supabase Auth."""
     # Verificar existencia y pertenencia al tenant
-    existing = safe_supabase_call(
+    query_existing = (
         supabase_admin_client.table("users")
         .select("id, activo")
         .eq("id", user_id)
         .eq("tenant_id", admin.tenant_id)
-        .execute
     )
+    query_existing = set_session_context(query_existing, request, admin)
+    existing = safe_supabase_call(query_existing.execute)
     if not existing.data:
         raise NotFoundError("Usuario no encontrado en este tenant")
 
     if not existing.data[0]["activo"]:
         raise ConflictError("El usuario ya se encuentra desactivado")
 
-    db_res = safe_supabase_call(
+    query = (
         supabase_admin_client.table("users")
         .update({"activo": False})
         .eq("id", user_id)
         .eq("tenant_id", admin.tenant_id)
-        .execute
     )
+    query = set_session_context(query, request, admin)
+    db_res = safe_supabase_call(query.execute)
 
     return UserResponse(**db_res.data[0])

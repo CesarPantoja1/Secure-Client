@@ -10,7 +10,7 @@ from app.schemas.tareas import (
     TareaResponse,
     TareaListResponse,
 )
-from app.services.supabase import supabase_admin_client, safe_supabase_call
+from app.services.supabase import supabase_admin_client, safe_supabase_call, set_session_context
 from app.core.exceptions import SCMException
 
 router = APIRouter(tags=["tareas"])
@@ -47,6 +47,7 @@ async def get_tareas(
 
     offset = (page - 1) * page_size
     query = query.range(offset, offset + page_size - 1).order("created_at", desc=True)
+    query = set_session_context(query, request, auth_context)
 
     response = safe_supabase_call(query.execute)
     items = response.data
@@ -60,13 +61,14 @@ async def get_tareas(
 async def get_tarea(
     request: Request, id: str, auth_context: AuthContext = Depends(get_auth_context)
 ):
-    response = safe_supabase_call(
+    query = (
         supabase_admin_client.table("tareas")
         .select("*")
         .eq("id", id)
         .eq("tenant_id", auth_context.tenant_id)
-        .execute
     )
+    query = set_session_context(query, request, auth_context)
+    response = safe_supabase_call(query.execute)
     if not response.data:
         raise SCMException("Tarea no encontrada", status_code=404, code="not_found")
 
@@ -81,13 +83,14 @@ async def create_tarea(
     auth_context: AuthContext = Depends(get_auth_context),
 ):
     # Verificar que el cliente_id pertenece al tenant
-    cliente_check = safe_supabase_call(
+    query_check = (
         supabase_admin_client.table("clientes")
         .select("id")
         .eq("id", payload.cliente_id)
         .eq("tenant_id", auth_context.tenant_id)
-        .execute
     )
+    query_check = set_session_context(query_check, request, auth_context)
+    cliente_check = safe_supabase_call(query_check.execute)
     if not cliente_check.data:
         raise SCMException(
             "El cliente especificado no existe o no pertenece al tenant",
@@ -101,9 +104,9 @@ async def create_tarea(
     if data.get("fecha_limite") is not None:
         data["fecha_limite"] = data["fecha_limite"].isoformat()
 
-    response = safe_supabase_call(
-        supabase_admin_client.table("tareas").insert(data).execute
-    )
+    query = supabase_admin_client.table("tareas").insert(data)
+    query = set_session_context(query, request, auth_context)
+    response = safe_supabase_call(query.execute)
 
     return response.data[0]
 
@@ -116,13 +119,14 @@ async def update_tarea(
     payload: UpdateTareaRequest,
     auth_context: AuthContext = Depends(get_auth_context),
 ):
-    check = safe_supabase_call(
+    query_check = (
         supabase_admin_client.table("tareas")
         .select("id")
         .eq("id", id)
         .eq("tenant_id", auth_context.tenant_id)
-        .execute
     )
+    query_check = set_session_context(query_check, request, auth_context)
+    check = safe_supabase_call(query_check.execute)
     if not check.data:
         raise SCMException("Tarea no encontrada", status_code=404, code="not_found")
 
@@ -135,13 +139,14 @@ async def update_tarea(
 
     data["updated_at"] = datetime.utcnow().isoformat()
 
-    response = safe_supabase_call(
+    query = (
         supabase_admin_client.table("tareas")
         .update(data)
         .eq("id", id)
         .eq("tenant_id", auth_context.tenant_id)
-        .execute
     )
+    query = set_session_context(query, request, auth_context)
+    response = safe_supabase_call(query.execute)
 
     return response.data[0]
 
@@ -151,22 +156,24 @@ async def update_tarea(
 async def delete_tarea(
     request: Request, id: str, auth_context: AuthContext = Depends(require_admin)
 ):
-    check = safe_supabase_call(
+    query_check = (
         supabase_admin_client.table("tareas")
         .select("id")
         .eq("id", id)
         .eq("tenant_id", auth_context.tenant_id)
-        .execute
     )
+    query_check = set_session_context(query_check, request, auth_context)
+    check = safe_supabase_call(query_check.execute)
     if not check.data:
         raise SCMException("Tarea no encontrada", status_code=404, code="not_found")
 
-    safe_supabase_call(
+    query = (
         supabase_admin_client.table("tareas")
         .delete()
         .eq("id", id)
         .eq("tenant_id", auth_context.tenant_id)
-        .execute
     )
+    query = set_session_context(query, request, auth_context)
+    safe_supabase_call(query.execute)
 
     return {"success": True, "message": "Tarea eliminada"}
