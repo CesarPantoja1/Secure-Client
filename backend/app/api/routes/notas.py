@@ -60,13 +60,13 @@ async def create_nota(
     }
 
     response = safe_supabase_call(
-        supabase_admin_client.table("notas_reunion")
-        .insert(insert_data)
-        .execute
+        supabase_admin_client.table("notas_reunion").insert(insert_data).execute
     )
 
     if not response.data:
-        raise SCMException("Error al crear la nota", status.HTTP_500_INTERNAL_SERVER_ERROR)
+        raise SCMException(
+            "Error al crear la nota", status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
     # Retornar con el contenido sensible original (en plano) para no volver a descifrar inmediatamente
     nota_creada = response.data[0]
@@ -108,6 +108,8 @@ async def get_notas(
             except Exception:
                 # Si falla el descifrado, podemos reportar un error controlado o limpiar el campo
                 # por seguridad no crasheamos el listado, pero ocultamos los datos corruptos.
-                nota["contenido_sensible"] = "[Error: No se pudo descifrar el contenido sensible]"
+                nota["contenido_sensible"] = (
+                    "[Error: No se pudo descifrar el contenido sensible]"
+                )
 
     return notas
