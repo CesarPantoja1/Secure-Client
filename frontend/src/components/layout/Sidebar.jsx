@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Lock, LayoutDashboard, Users, CheckSquare, FileText, Shield, Settings } from "./Icons";
+import { Lock, LayoutDashboard, Users, CheckSquare, Shield, Settings } from "./Icons";
 
 export function Sidebar({ role }) {
   return (

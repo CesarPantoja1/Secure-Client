@@ -49,7 +49,9 @@ def set_session_context(
     query_builder.request.headers["x-audit-user-id"] = user_id
     query_builder.request.headers["x-audit-user-email"] = user_email
     query_builder.request.headers["x-audit-ip"] = ip
-    query_builder.request.headers["x-audit-user-agent"] = request.headers.get("user-agent", "")
+    query_builder.request.headers["x-audit-user-agent"] = request.headers.get(
+        "user-agent", ""
+    )
     query_builder.request.headers["x-audit-tenant-id"] = tenant_id
     query_builder.request.headers["x-audit-hmac-secret"] = settings.audit_hmac_secret
     return query_builder

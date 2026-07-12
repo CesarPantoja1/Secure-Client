@@ -1,0 +1,183 @@
+.chartCard {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.chartHeader {
+  margin-bottom: 1.5rem;
+}
+
+.chartTitleWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chartIcon {
+  font-size: 1.25rem;
+}
+
+.chartTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.chartSubtitle {
+  font-size: 0.875rem;
+  color: var(--color-text-light);
+  margin: 0.25rem 0 0 0;
+}
+
+/* --- Bar Chart --- */
+.barChartContainer {
+  display: flex;
+  height: 200px;
+  gap: 1rem;
+  margin-top: auto;
+}
+
+.yAxis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: var(--color-text-light);
+  font-size: 0.75rem;
+  padding-bottom: 1.5rem; /* align with bar area bottom */
+  text-align: right;
+  min-width: 20px;
+}
+
+.barsArea {
+  flex: 1;
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  border-bottom: 1px dashed var(--color-border);
+  padding-bottom: 0.5rem;
+  position: relative;
+}
+
+/* Background grid lines */
+.barsArea::before {
+  content: '';
+  position: absolute;
+  top: 25%;
+  left: 0;
+  right: 0;
+  border-top: 1px dashed var(--color-border);
+  z-index: 0;
+}
+.barsArea::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  border-top: 1px dashed var(--color-border);
+  z-index: 0;
+}
+
+.barColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 40px;
+  height: 100%;
+  z-index: 1;
+}
+
+.barWrapper {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.bar {
+  width: 100%;
+  background-color: #2563eb;
+  border-radius: 4px 4px 0 0;
+  position: relative;
+  transition: height 0.5s ease-in-out;
+}
+
+.bar:hover {
+  background-color: #1d4ed8;
+}
+
+.barTooltip {
+  position: absolute;
+  top: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-text);
+  color: white;
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.bar:hover .barTooltip {
+  opacity: 1;
+}
+
+.barLabel {
+  font-size: 0.75rem;
+  color: var(--color-text-light);
+  text-align: center;
+}
+
+/* --- Progress List --- */
+.progressList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+.progressItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.progressItemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.progressLabel {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.progressValue {
+  color: var(--color-text-light);
+}
+
+.progressBarTrack {
+  height: 8px;
+  background-color: var(--color-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progressBarFill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease-in-out;
+}

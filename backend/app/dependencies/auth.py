@@ -50,7 +50,9 @@ async def get_auth_context(request: Request, response: Response) -> AuthContext:
             raise AuthenticationError("Token expired and no refresh token available")
 
         try:
-            auth_res = safe_supabase_call(supabase_client.auth.refresh_session, refresh_token)
+            auth_res = safe_supabase_call(
+                supabase_client.auth.refresh_session, refresh_token
+            )
             if not auth_res.session:
                 raise AuthenticationError("Unable to refresh session")
 

@@ -147,7 +147,9 @@ def logout(request: Request, response: Response):
     if token:
         try:
             # We decode without verify_signature to be able to revoke even if expired
-            payload = jwt.decode(token, options={"verify_signature": False})
+            payload = jwt.decode(
+                token, options={"verify_signature": False}
+            )  # nosemgrep: python.jwt.security.unverified-jwt-decode.unverified-jwt-decode
             jti = payload.get("jti")
             exp = payload.get("exp")
             if jti and exp:
