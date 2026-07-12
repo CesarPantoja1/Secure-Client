@@ -1,0 +1,190 @@
+.container {
+  padding: 32px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--neutral-900);
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: var(--neutral-500);
+  font-size: 15px;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btnAction {
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--t-fast);
+  border: 1px solid transparent;
+}
+
+.btnBack {
+  background: var(--surface-bg);
+  color: var(--neutral-700);
+  border-color: var(--surface-border);
+}
+
+.btnBack:hover {
+  background: var(--neutral-50);
+}
+
+.btnEdit {
+  background: var(--color-primary-50);
+  color: var(--color-primary-700);
+  border-color: var(--color-primary-200);
+}
+
+.btnEdit:hover {
+  background: var(--color-primary-100);
+}
+
+.btnDelete {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--color-error);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.btnDelete:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.card {
+  background: var(--surface-bg);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.cardSection {
+  padding: 24px 32px;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.cardSection:last-child {
+  border-bottom: none;
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--neutral-900);
+  margin-bottom: 20px;
+}
+
+.gridInfo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+}
+
+.infoGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--neutral-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.value {
+  font-size: 15px;
+  color: var(--neutral-900);
+  font-weight: 500;
+}
+
+.badge {
+  display: inline-flex;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.badgeContable {
+  background: var(--color-primary-50);
+  color: var(--color-primary-700);
+  border: 1px solid var(--color-primary-200);
+}
+
+.badgeMedico {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--color-success);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.badgeMarketing {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--color-warning);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.sensitiveBox {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  margin-top: 10px;
+}
+
+.sensitiveHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #b45309;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.sensitiveContent {
+  color: #92400e;
+  font-size: 14px;
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+.loading {
+  padding: 60px;
+  text-align: center;
+  color: var(--neutral-500);
+  font-size: 16px;
+}
+
+.errorState {
+  padding: 60px;
+  text-align: center;
+}
+
+.errorTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--neutral-900);
+  margin-bottom: 16px;
+}
