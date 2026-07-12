@@ -4,6 +4,7 @@ import LoginPage from "./pages/LoginPage";
 import AdminTenantsPage from "./pages/AdminTenantsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
+import DashboardPage from "./pages/DashboardPage";
 
 // Placeholders para páginas no implementadas
 import AdminUsersPage from "./pages/AdminUsersPage";
@@ -14,39 +15,7 @@ import TareasListPage from "./pages/TareasListPage";
 import AuditoriaPage from "./pages/AuditoriaPage";
 const NotasPage = () => <div style={{padding: 20}}><h2>Notas - En construcción</h2></div>;
 
-function DashboardPlaceholder() {
 
-  return (
-    <div className="dashboard-placeholder">
-      <div className="dashboard-placeholder__card">
-        <div className="dashboard-placeholder__icon" aria-hidden="true">
-          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-            <rect width="48" height="48" rx="14" fill="url(#dash-grad)" />
-            <path
-              d="M14 28l6-8 5 6 4-4 6 8"
-              stroke="#fff"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <circle cx="18" cy="18" r="3" fill="#fff" fillOpacity="0.7" />
-            <defs>
-              <linearGradient id="dash-grad" x1="0" y1="0" x2="48" y2="48">
-                <stop stopColor="#7c3aed" />
-                <stop offset="1" stopColor="#a855f7" />
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
-        <h1 className="dashboard-placeholder__title">Dashboard</h1>
-        <p className="dashboard-placeholder__subtitle">
-          Bienvenido al panel principal. Esta sección está en construcción.
-        </p>
-        <span className="dashboard-placeholder__badge">En desarrollo</span>
-      </div>
-    </div>
-  );
-}
 
 function App() {
   return (
@@ -65,7 +34,7 @@ function App() {
               </ProtectedRoute>
             }
           >
-            <Route path="/" element={<DashboardPlaceholder />} />
+            <Route path="/" element={<DashboardPage />} />
             <Route path="/clientes" element={<ClientesListPage />} />
             <Route path="/clientes/nuevo" element={<ClienteFormPage />} />
             <Route path="/clientes/:id" element={<ClienteDetailPage />} />
