@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Request, status
 from app.core.rate_limit import limiter
 from app.schemas.auth import AuthContext
 from app.dependencies.auth import get_auth_context
@@ -105,7 +105,7 @@ async def get_notas(
             try:
                 cifrado = deserialize_bytea(nota["contenido_sensible"])
                 nota["contenido_sensible"] = decrypt_field(cifrado, key)
-            except Exception as e:
+            except Exception:
                 # Si falla el descifrado, podemos reportar un error controlado o limpiar el campo
                 # por seguridad no crasheamos el listado, pero ocultamos los datos corruptos.
                 nota["contenido_sensible"] = "[Error: No se pudo descifrar el contenido sensible]"
