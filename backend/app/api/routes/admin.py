@@ -7,7 +7,11 @@ from app.schemas.users import (
     UserListResponse,
 )
 from app.schemas.auth import AuthContext
-from app.services.supabase import supabase_admin_client, safe_supabase_call, set_session_context
+from app.services.supabase import (
+    supabase_admin_client,
+    safe_supabase_call,
+    set_session_context,
+)
 from app.core.exceptions import ConflictError, NotFoundError, SCMException
 from app.core.rate_limit import limiter
 from app.dependencies.auth import require_admin
@@ -27,9 +31,8 @@ router = APIRouter(
 def create_tenant(request: Request, req: CreateTenantRequest):
     # Insertar el tenant usando la key de admin (service role)
     try:
-        query = (
-            supabase_admin_client.table("tenants")
-            .insert({"nombre": req.nombre_tenant, "activo": True})
+        query = supabase_admin_client.table("tenants").insert(
+            {"nombre": req.nombre_tenant, "activo": True}
         )
         query = set_session_context(query, request)
         tenant_res = safe_supabase_call(query.execute)

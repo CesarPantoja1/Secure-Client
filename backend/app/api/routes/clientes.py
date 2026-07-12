@@ -9,7 +9,11 @@ from app.schemas.clientes import (
     ClienteResponse,
     ClienteListResponse,
 )
-from app.services.supabase import supabase_admin_client, safe_supabase_call, set_session_context
+from app.services.supabase import (
+    supabase_admin_client,
+    safe_supabase_call,
+    set_session_context,
+)
 from app.services.encryption import encrypt_field, decrypt_field, get_encryption_key
 from app.core.exceptions import SCMException
 

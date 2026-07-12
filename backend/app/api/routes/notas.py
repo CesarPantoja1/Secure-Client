@@ -3,7 +3,11 @@ from app.core.rate_limit import limiter
 from app.schemas.auth import AuthContext
 from app.dependencies.auth import get_auth_context
 from app.schemas.notas import CreateNotaRequest, NotaResponse
-from app.services.supabase import supabase_admin_client, safe_supabase_call, set_session_context
+from app.services.supabase import (
+    supabase_admin_client,
+    safe_supabase_call,
+    set_session_context,
+)
 from app.services.encryption import encrypt_field, decrypt_field, get_encryption_key
 from app.core.exceptions import SCMException
 

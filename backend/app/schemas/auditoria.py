@@ -3,6 +3,7 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict
 from uuid import UUID
 
+
 class AuditQueryParams(BaseModel):
     user_id: Optional[UUID] = None
     accion: Optional[str] = None
@@ -12,6 +13,7 @@ class AuditQueryParams(BaseModel):
     fecha_hasta: Optional[date] = None
     page: int = 1
     page_size: int = 20
+
 
 class AuditLogResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)

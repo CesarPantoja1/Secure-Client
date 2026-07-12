@@ -4,6 +4,7 @@ from app.services.supabase import supabase_admin_client, safe_supabase_call
 
 logger = logging.getLogger("scm.backend")
 
+
 def cleanup_revoked_tokens():
     logger.info("Iniciando limpieza de tokens revocados expirados")
     try:
@@ -15,6 +16,8 @@ def cleanup_revoked_tokens():
             .execute
         )
         deleted_count = len(response.data) if response.data else 0
-        logger.info(f"Limpieza completada. Se eliminaron {deleted_count} tokens expirados.")
+        logger.info(
+            f"Limpieza completada. Se eliminaron {deleted_count} tokens expirados."
+        )
     except Exception as e:
         logger.exception("Error durante la limpieza de tokens revocados", exc_info=e)

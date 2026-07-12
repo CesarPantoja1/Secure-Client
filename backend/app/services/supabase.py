@@ -29,8 +29,6 @@ def safe_supabase_call(operation: Callable[..., Any], *args: Any, **kwargs: Any)
         ) from exc
 
 
-
-
 def set_session_context(
     query_builder: Any, request: Request, auth_context: AuthContext | None = None
 ) -> Any:

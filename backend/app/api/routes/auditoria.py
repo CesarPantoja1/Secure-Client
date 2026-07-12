@@ -11,6 +11,7 @@ from app.core.config import settings
 
 router = APIRouter(tags=["auditoria"])
 
+
 @router.get("/auditoria")
 @limiter.limit("50/minute")
 async def get_auditoria(
@@ -96,7 +97,7 @@ async def get_auditoria(
         "datos_anteriores": None,
         "datos_nuevos": filtros,
         "ip_origen": client_ip,
-        "user_agent": request.headers.get("user-agent", "")
+        "user_agent": request.headers.get("user-agent", ""),
     }
 
     # Insertar el log de meta-auditoría
@@ -104,9 +105,4 @@ async def get_auditoria(
     meta_query.headers["x-audit-hmac-secret"] = settings.audit_hmac_secret
     safe_supabase_call(meta_query.execute)
 
-    return {
-        "items": items,
-        "total": total,
-        "page": page,
-        "page_size": page_size
-    }
+    return {"items": items, "total": total, "page": page, "page_size": page_size}

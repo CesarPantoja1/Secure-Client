@@ -10,7 +10,11 @@ from app.schemas.tareas import (
     TareaResponse,
     TareaListResponse,
 )
-from app.services.supabase import supabase_admin_client, safe_supabase_call, set_session_context
+from app.services.supabase import (
+    supabase_admin_client,
+    safe_supabase_call,
+    set_session_context,
+)
 from app.core.exceptions import SCMException
 
 router = APIRouter(tags=["tareas"])

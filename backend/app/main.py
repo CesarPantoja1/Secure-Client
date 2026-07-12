@@ -32,6 +32,7 @@ logger = logging.getLogger("scm.backend")
 async def lifespan(app: FastAPI):
     logger.info("SCM backend started")
     from app.tasks.scheduler import start_scheduler, shutdown_scheduler
+
     start_scheduler()
     yield
     shutdown_scheduler()

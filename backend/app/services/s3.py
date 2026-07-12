@@ -8,6 +8,7 @@ from app.services.supabase import supabase_admin_client, safe_supabase_call
 
 logger = logging.getLogger("scm.backend")
 
+
 def export_logs_to_s3():
     logger.info("Iniciando exportación de logs de auditoría a S3")
     try:
@@ -39,9 +40,12 @@ def export_logs_to_s3():
 
         # Verificar si AWS está configurado
         is_aws_configured = (
-            settings.aws_access_key_id and "tu_aws" not in settings.aws_access_key_id
-            and settings.aws_secret_access_key and "tu_aws" not in settings.aws_secret_access_key
-            and settings.aws_s3_bucket and "nombre-de" not in settings.aws_s3_bucket
+            settings.aws_access_key_id
+            and "tu_aws" not in settings.aws_access_key_id
+            and settings.aws_secret_access_key
+            and "tu_aws" not in settings.aws_secret_access_key
+            and settings.aws_s3_bucket
+            and "nombre-de" not in settings.aws_s3_bucket
         )
 
         if is_aws_configured:
@@ -49,7 +53,7 @@ def export_logs_to_s3():
                 "s3",
                 aws_access_key_id=settings.aws_access_key_id,
                 aws_secret_access_key=settings.aws_secret_access_key,
-                region_name=settings.aws_region
+                region_name=settings.aws_region,
             )
             s3_client.put_object(
                 Bucket=settings.aws_s3_bucket,
@@ -59,15 +63,22 @@ def export_logs_to_s3():
                 Metadata={
                     "export_date": datetime.utcnow().isoformat(),
                     "sha256_hash": payload_hash,
-                    "record_count": str(len(logs))
-                }
+                    "record_count": str(len(logs)),
+                },
             )
-            logger.info(f"Logs subidos exitosamente a S3: s3://{settings.aws_s3_bucket}/{key_name}")
+            logger.info(
+                f"Logs subidos exitosamente a S3: s3://{settings.aws_s3_bucket}/{key_name}"
+            )
         else:
-            logger.warning("AWS S3 no está configurado. Guardando exportación localmente para simulación.")
+            logger.warning(
+                "AWS S3 no está configurado. Guardando exportación localmente para simulación."
+            )
             import os
+
             # Build absolute path to scratch/s3_mock in the workspace
-            workspace_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            workspace_dir = os.path.dirname(
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            )
             mock_dir = os.path.join(workspace_dir, "scratch", "s3_mock")
             os.makedirs(mock_dir, exist_ok=True)
             mock_path = os.path.join(mock_dir, f"audit_export_{timestamp_str}.json")
@@ -98,13 +109,13 @@ def export_logs_to_s3():
                 "key_s3": key_name,
                 "record_count": len(log_ids),
                 "sha256_hash": payload_hash,
-                "exported_ids": log_ids
+                "exported_ids": log_ids,
             },
             "user_email": "system@cron",
             "ip_origen": "127.0.0.1",
-            "user_agent": "APScheduler-Cron"
+            "user_agent": "APScheduler-Cron",
         }
-        
+
         # Inject context headers so the before insert trigger calculates hash correctly
         query = supabase_admin_client.table("audit_logs").insert(export_event)
         query.headers["x-audit-hmac-secret"] = settings.audit_hmac_secret
