@@ -138,3 +138,61 @@ def get_me(request: Request):
     except jwt.InvalidTokenError as e:
         logger.warning("JWT decode failed in get_me: %s - %s", type(e).__name__, str(e))
         raise HTTPException(status_code=401, detail="Token inválido")
+
+
+@router.post("/logout")
+@limiter.limit("10/minute")
+def logout(request: Request, response: Response):
+    token = request.cookies.get("scm_access_token")
+    if token:
+        try:
+            # We decode without verify_signature to be able to revoke even if expired
+            payload = jwt.decode(token, options={"verify_signature": False})
+            jti = payload.get("jti")
+            exp = payload.get("exp")
+            if jti and exp:
+                from datetime import datetime, timezone
+
+                safe_supabase_call(
+                    supabase_admin_client.table("revoked_tokens")
+                    .insert(
+                        {
+                            "jti": jti,
+                            "exp": datetime.fromtimestamp(
+                                exp, tz=timezone.utc
+                            ).isoformat(),
+                            "revoked_at": datetime.now(timezone.utc).isoformat(),
+                        }
+                    )
+                    .execute
+                )
+        except Exception as e:
+            logger.warning(f"Error extracting jti on logout: {e}")
+
+    # Clear cookies by setting max_age=0
+    response.set_cookie(
+        key="scm_access_token",
+        value="",
+        max_age=0,
+        httponly=True,
+        secure=True,
+        samesite="strict",
+    )
+    response.set_cookie(
+        key="scm_refresh_token",
+        value="",
+        max_age=0,
+        httponly=True,
+        secure=True,
+        samesite="strict",
+    )
+    response.set_cookie(
+        key="scm_csrf_token",
+        value="",
+        max_age=0,
+        httponly=False,
+        secure=True,
+        samesite="strict",
+    )
+
+    return {"success": True, "message": "Sesión cerrada correctamente"}
