@@ -7,9 +7,10 @@ import Layout from "./components/Layout";
 
 // Placeholders para páginas no implementadas
 import AdminUsersPage from "./pages/AdminUsersPage";
-const ClientesListPage = () => <div style={{padding: 20}}><h2>Clientes - En construcción</h2></div>;
-const ClienteFormPage = () => <div style={{padding: 20}}><h2>Formulario de Cliente - En construcción</h2></div>;
-const ClienteDetailPage = () => <div style={{padding: 20}}><h2>Detalle de Cliente - En construcción</h2></div>;
+import ClientesListPage from "./pages/ClientesListPage";
+import ClienteFormPage from "./pages/ClienteFormPage";
+import ClienteDetailPage from "./pages/ClienteDetailPage";
+
 const TareasListPage = () => <div style={{padding: 20}}><h2>Tareas - En construcción</h2></div>;
 const TareaFormPage = () => <div style={{padding: 20}}><h2>Formulario de Tarea - En construcción</h2></div>;
 const AuditoriaPage = () => <div style={{padding: 20}}><h2>Auditoría - En construcción</h2></div>;
