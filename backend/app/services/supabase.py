@@ -2,7 +2,8 @@ import logging
 from typing import Any, Callable
 
 from supabase import Client, create_client
-
+from fastapi import Request
+from app.schemas.auth import AuthContext
 from app.core.config import settings
 from app.core.exceptions import SCMException
 
@@ -28,8 +29,7 @@ def safe_supabase_call(operation: Callable[..., Any], *args: Any, **kwargs: Any)
         ) from exc
 
 
-from fastapi import Request
-from app.schemas.auth import AuthContext
+
 
 def set_session_context(
     query_builder: Any, request: Request, auth_context: AuthContext | None = None
