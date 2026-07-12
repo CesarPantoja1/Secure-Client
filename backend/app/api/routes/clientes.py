@@ -9,7 +9,7 @@ from app.schemas.clientes import (
     ClienteResponse,
     ClienteListResponse,
 )
-from app.services.supabase import supabase_client, safe_supabase_call
+from app.services.supabase import supabase_admin_client, safe_supabase_call
 from app.services.encryption import encrypt_field, decrypt_field, get_encryption_key
 from app.core.exceptions import SCMException
 
@@ -40,7 +40,7 @@ async def get_clientes(
     tenant_id = auth_context.tenant_id
 
     query = (
-        supabase_client.table("clientes")
+        supabase_admin_client.table("clientes")
         .select("*", count="exact")
         .eq("tenant_id", tenant_id)
     )
@@ -54,11 +54,19 @@ async def get_clientes(
     items = response.data
     total = response.count if response.count is not None else 0
 
-    key = get_encryption_key()
+    key = None
     for item in items:
-        if item.get("notas_sensibles"):
-            encrypted_bytes = deserialize_bytea(item["notas_sensibles"])
-            item["notas_sensibles"] = decrypt_field(encrypted_bytes, key)
+        notas = item.get("notas_sensibles")
+        if notas and notas != "\\x":
+            try:
+                if key is None:
+                    key = get_encryption_key()
+                encrypted_bytes = deserialize_bytea(notas)
+                item["notas_sensibles"] = decrypt_field(encrypted_bytes, key)
+            except Exception:
+                item["notas_sensibles"] = "Error: no se pudo descifrar"
+        else:
+            item["notas_sensibles"] = None
 
     return ClienteListResponse(items=items, total=total, page=page, page_size=page_size)
 
@@ -69,7 +77,7 @@ async def get_cliente(
     request: Request, id: str, auth_context: AuthContext = Depends(get_auth_context)
 ):
     response = safe_supabase_call(
-        supabase_client.table("clientes")
+        supabase_admin_client.table("clientes")
         .select("*")
         .eq("id", id)
         .eq("tenant_id", auth_context.tenant_id)
@@ -79,10 +87,16 @@ async def get_cliente(
         raise SCMException("Cliente no encontrado", status_code=404, code="not_found")
 
     item = response.data[0]
-    if item.get("notas_sensibles"):
-        key = get_encryption_key()
-        encrypted_bytes = deserialize_bytea(item["notas_sensibles"])
-        item["notas_sensibles"] = decrypt_field(encrypted_bytes, key)
+    notas = item.get("notas_sensibles")
+    if notas and notas != "\\x":
+        try:
+            key = get_encryption_key()
+            encrypted_bytes = deserialize_bytea(notas)
+            item["notas_sensibles"] = decrypt_field(encrypted_bytes, key)
+        except Exception:
+            item["notas_sensibles"] = "Error: no se pudo descifrar"
+    else:
+        item["notas_sensibles"] = None
 
     return item
 
@@ -98,20 +112,29 @@ async def create_cliente(
     data["tenant_id"] = auth_context.tenant_id
     data["created_by"] = auth_context.user_id
 
-    if data.get("notas_sensibles"):
+    notas = data.get("notas_sensibles")
+    if notas and notas.strip():
         key = get_encryption_key()
-        encrypted_bytes = encrypt_field(data["notas_sensibles"], key)
+        encrypted_bytes = encrypt_field(notas, key)
         data["notas_sensibles"] = serialize_bytea(encrypted_bytes)
+    else:
+        data["notas_sensibles"] = None
 
     response = safe_supabase_call(
-        supabase_client.table("clientes").insert(data).execute
+        supabase_admin_client.table("clientes").insert(data).execute
     )
 
     item = response.data[0]
-    if item.get("notas_sensibles"):
-        key = get_encryption_key()
-        encrypted_bytes = deserialize_bytea(item["notas_sensibles"])
-        item["notas_sensibles"] = decrypt_field(encrypted_bytes, key)
+    notas_resp = item.get("notas_sensibles")
+    if notas_resp and notas_resp != "\\x":
+        try:
+            key = get_encryption_key()
+            encrypted_bytes = deserialize_bytea(notas_resp)
+            item["notas_sensibles"] = decrypt_field(encrypted_bytes, key)
+        except Exception:
+            item["notas_sensibles"] = "Error: no se pudo descifrar"
+    else:
+        item["notas_sensibles"] = None
 
     return item
 
@@ -125,7 +148,7 @@ async def update_cliente(
     auth_context: AuthContext = Depends(get_auth_context),
 ):
     check = safe_supabase_call(
-        supabase_client.table("clientes")
+        supabase_admin_client.table("clientes")
         .select("id")
         .eq("id", id)
         .eq("tenant_id", auth_context.tenant_id)
@@ -138,17 +161,19 @@ async def update_cliente(
     if not data:
         return await get_cliente(request, id, auth_context)
 
-    if "notas_sensibles" in data and data["notas_sensibles"] is not None:
-        key = get_encryption_key()
-        encrypted_bytes = encrypt_field(data["notas_sensibles"], key)
-        data["notas_sensibles"] = serialize_bytea(encrypted_bytes)
-    elif "notas_sensibles" in data and data["notas_sensibles"] is None:
-        data["notas_sensibles"] = None
+    if "notas_sensibles" in data:
+        notas = data["notas_sensibles"]
+        if notas and notas.strip():
+            key = get_encryption_key()
+            encrypted_bytes = encrypt_field(notas, key)
+            data["notas_sensibles"] = serialize_bytea(encrypted_bytes)
+        else:
+            data["notas_sensibles"] = None
 
     data["updated_at"] = datetime.utcnow().isoformat()
 
     response = safe_supabase_call(
-        supabase_client.table("clientes")
+        supabase_admin_client.table("clientes")
         .update(data)
         .eq("id", id)
         .eq("tenant_id", auth_context.tenant_id)
@@ -156,10 +181,16 @@ async def update_cliente(
     )
 
     item = response.data[0]
-    if item.get("notas_sensibles"):
-        key = get_encryption_key()
-        encrypted_bytes = deserialize_bytea(item["notas_sensibles"])
-        item["notas_sensibles"] = decrypt_field(encrypted_bytes, key)
+    notas_resp = item.get("notas_sensibles")
+    if notas_resp and notas_resp != "\\x":
+        try:
+            key = get_encryption_key()
+            encrypted_bytes = deserialize_bytea(notas_resp)
+            item["notas_sensibles"] = decrypt_field(encrypted_bytes, key)
+        except Exception:
+            item["notas_sensibles"] = "Error: no se pudo descifrar"
+    else:
+        item["notas_sensibles"] = None
 
     return item
 
@@ -170,7 +201,7 @@ async def delete_cliente(
     request: Request, id: str, auth_context: AuthContext = Depends(require_admin)
 ):
     check = safe_supabase_call(
-        supabase_client.table("clientes")
+        supabase_admin_client.table("clientes")
         .select("id")
         .eq("id", id)
         .eq("tenant_id", auth_context.tenant_id)
@@ -180,7 +211,7 @@ async def delete_cliente(
         raise SCMException("Cliente no encontrado", status_code=404, code="not_found")
 
     safe_supabase_call(
-        supabase_client.table("clientes")
+        supabase_admin_client.table("clientes")
         .delete()
         .eq("id", id)
         .eq("tenant_id", auth_context.tenant_id)

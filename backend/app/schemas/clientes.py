@@ -29,8 +29,8 @@ class ClienteResponse(BaseModel):
     tipo: str
     notas_sensibles: Optional[str] = None
     created_by: Optional[UUID] = None
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 
 class ClienteListResponse(BaseModel):

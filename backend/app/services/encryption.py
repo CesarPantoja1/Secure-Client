@@ -20,7 +20,10 @@ def get_encryption_key() -> bytes:
         # Podríamos omitir esto si asumimos que en test puede venir vacía, pero la especificación pide longitud
         pass
 
-    key_bytes = base64.b64decode(key_str)
+    # Reemplazar caracteres url-safe por estándar para soportar ambos formatos y agregar padding
+    safe_key_str = key_str.replace("-", "+").replace("_", "/")
+    safe_key_str += "=" * (-len(safe_key_str) % 4)
+    key_bytes = base64.b64decode(safe_key_str)
 
     if len(key_bytes) != 32:
         raise ValueError("FIELD_ENCRYPTION_KEY debe decodificar a exactamente 32 bytes")
