@@ -1,9 +1,11 @@
 import { useState, useCallback } from 'react';
 import { apiRequest, ApiError } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 export function useApi() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   const clearError = useCallback(() => {
     setError(null);
@@ -20,7 +22,7 @@ export function useApi() {
       setLoading(false);
       if (err instanceof ApiError) {
         if (err.status === 401) {
-          window.location.href = '/login';
+          navigate('/login', { state: { message: "Tu sesión ha expirado. Inicia sesión nuevamente." } });
           return;
         }
         // Se guarda el error para manejar rate limits (429) u otros status en la UI
@@ -30,7 +32,7 @@ export function useApi() {
       }
       throw err;
     }
-  }, []);
+  }, [navigate]);
 
   return { execute, loading, error, clearError };
 }

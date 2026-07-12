@@ -1,14 +1,12 @@
-import { useNavigate } from "react-router-dom";
+
 import { Building2, SearchIcon, BellIcon, UserIcon, LogOutIcon, Shield } from "./Icons";
 import { useAuth } from "../../contexts/AuthContext";
 
 export function Header() {
   const { user, role, logout } = useAuth();
-  const navigate = useNavigate();
 
-  const handleLogout = () => {
-    if (logout) logout();
-    navigate('/login');
+  const handleLogout = async () => {
+    if (logout) await logout();
   };
 
   // Simulación de datos extraídos del user o defaults
