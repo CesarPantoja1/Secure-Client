@@ -7,7 +7,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from slowapi import _rate_limit_exceeded_handler  # type: ignore
 from slowapi.errors import RateLimitExceeded  # type: ignore
 from app.core.rate_limit import limiter
-from app.api.routes import auth, admin, clientes, tareas, notas, auditoria
+from app.api.routes import auth, admin, clientes, tareas, notas, auditoria, dashboard
 from app.middleware.csrf import CSRFMiddleware
 
 from app.core.config import settings
@@ -67,6 +67,7 @@ app.include_router(clientes.router, prefix="/api")
 app.include_router(tareas.router, prefix="/api")
 app.include_router(notas.router, prefix="/api")
 app.include_router(auditoria.router, prefix="/api")
+app.include_router(dashboard.router, prefix="/api")
 
 
 @app.get("/api/health")
