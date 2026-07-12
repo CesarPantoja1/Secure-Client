@@ -27,10 +27,6 @@ export default function ClientesListPage() {
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
-  // Reset de página al cambiar filtros
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch, filtroTipo]);
 
   const fetchClientes = useCallback(async () => {
     try {
@@ -47,12 +43,13 @@ export default function ClientesListPage() {
         // pero mantendremos la lógica simple o usaremos la longitud filtrada si es menor al pageSize
         setTotal(filtroTipo ? filteredItems.length : data.total);
       }
-    } catch (e) {
+    } catch {
       // Manejado por useApi / ErrorNotification
     }
   }, [execute, page, pageSize, debouncedSearch, filtroTipo]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchClientes();
   }, [fetchClientes]);
 
@@ -63,7 +60,7 @@ export default function ClientesListPage() {
     try {
       await execute(`/api/clientes/${id}`, { method: 'DELETE' });
       fetchClientes();
-    } catch (e) {
+    } catch {
       // Manejado por useApi
     }
   };
@@ -107,12 +104,12 @@ export default function ClientesListPage() {
           placeholder="Buscar por nombre..." 
           className={styles.searchInput}
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
         />
         <select 
           className={styles.filterSelect}
           value={filtroTipo}
-          onChange={(e) => setFiltroTipo(e.target.value)}
+          onChange={(e) => { setFiltroTipo(e.target.value); setPage(1); }}
         >
           <option value="">Todos los tipos</option>
           <option value="contable">Contable</option>
