@@ -3,7 +3,7 @@ from fastapi import Request, Depends, Response
 from app.core.config import settings
 from app.core.exceptions import AuthenticationError, ForbiddenError
 from app.schemas.auth import AuthContext
-from app.services.supabase import supabase_client
+from app.services.supabase import supabase_client, safe_supabase_call
 
 jwks_url = f"{settings.supabase_url}/auth/v1/.well-known/jwks.json"
 jwk_client = jwt.PyJWKClient(jwks_url, headers={"apikey": settings.supabase_anon_key})
@@ -50,7 +50,7 @@ async def get_auth_context(request: Request, response: Response) -> AuthContext:
             raise AuthenticationError("Token expired and no refresh token available")
 
         try:
-            auth_res = supabase_client.auth.refresh_session(refresh_token)
+            auth_res = safe_supabase_call(supabase_client.auth.refresh_session, refresh_token)
             if not auth_res.session:
                 raise AuthenticationError("Unable to refresh session")
 
