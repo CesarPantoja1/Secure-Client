@@ -3,7 +3,11 @@ from app.core.rate_limit import limiter
 from app.schemas.auth import AuthContext
 from app.dependencies.auth import get_auth_context
 from app.schemas.notas import CreateNotaRequest, NotaResponse
-from app.services.supabase import supabase_admin_client, safe_supabase_call
+from app.services.supabase import (
+    supabase_admin_client,
+    safe_supabase_call,
+    set_session_context,
+)
 from app.services.encryption import encrypt_field, decrypt_field, get_encryption_key
 from app.core.exceptions import SCMException
 
@@ -33,13 +37,14 @@ async def create_nota(
     autor_id = auth_context.user_id
 
     # 1. Verificar que el cliente existe y pertenece al tenant
-    cliente_response = safe_supabase_call(
+    query_check = (
         supabase_admin_client.table("clientes")
         .select("id")
         .eq("id", str(nota.cliente_id))
         .eq("tenant_id", tenant_id)
-        .execute
     )
+    query_check = set_session_context(query_check, request, auth_context)
+    cliente_response = safe_supabase_call(query_check.execute)
     if not cliente_response.data:
         raise SCMException("Cliente no encontrado", status.HTTP_404_NOT_FOUND)
 
@@ -59,9 +64,9 @@ async def create_nota(
         "contenido_sensible": contenido_sensible_bytes,
     }
 
-    response = safe_supabase_call(
-        supabase_admin_client.table("notas_reunion").insert(insert_data).execute
-    )
+    query = supabase_admin_client.table("notas_reunion").insert(insert_data)
+    query = set_session_context(query, request, auth_context)
+    response = safe_supabase_call(query.execute)
 
     if not response.data:
         raise SCMException(
@@ -91,14 +96,15 @@ async def get_notas(
     tenant_id = auth_context.tenant_id
 
     # Obtener las notas
-    response = safe_supabase_call(
+    query = (
         supabase_admin_client.table("notas_reunion")
         .select("*, users(nombre_completo, email)")
         .eq("cliente_id", cliente_id)
         .eq("tenant_id", tenant_id)
         .order("created_at", desc=True)
-        .execute
     )
+    query = set_session_context(query, request, auth_context)
+    response = safe_supabase_call(query.execute)
 
     notas = response.data
     key = None
