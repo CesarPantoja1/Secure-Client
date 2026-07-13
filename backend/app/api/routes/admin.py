@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Query, Request, Depends
+from typing import Optional
 from app.schemas.admin import CreateTenantRequest, CreateTenantResponse
 from app.schemas.users import (
     CreateUserRequest,
@@ -106,27 +107,44 @@ def list_users(
     admin: AuthContext = Depends(require_admin),
     page: int = Query(1, ge=1, description="Número de página"),
     page_size: int = Query(20, ge=1, le=100, description="Resultados por página"),
+    search: Optional[str] = Query(None, description="Buscar por nombre o correo"),
+    role: Optional[str] = Query(None, description="Filtrar por rol"),
 ):
-    """Listar usuarios del tenant del administrador autenticado (paginación)."""
+    """Listar usuarios del tenant del administrador autenticado (paginación y filtros)."""
     offset = (page - 1) * page_size
 
-    # Obtener el total de registros del tenant
+    # Construir queries base
     query_count = (
         supabase_admin_client.table("users")
         .select("id", count="exact")
         .eq("tenant_id", admin.tenant_id)
     )
-    query_count = set_session_context(query_count, request, admin)
-    count_res = safe_supabase_call(query_count.execute)
-    total = count_res.count if count_res.count is not None else 0
-
-    # Obtener la página solicitada
     query_data = (
         supabase_admin_client.table("users")
         .select("id, email, nombre_completo, role, activo, created_at")
         .eq("tenant_id", admin.tenant_id)
-        .order("created_at", desc=False)
-        .range(offset, offset + page_size - 1)
+    )
+
+    # Aplicar filtros
+    if search:
+        # Supabase Python no tiene "or" nativo sencillo sin sintaxis PostgREST avanzada,
+        # asumiendo que usamos ilike en nombre_completo por simplicidad o sintaxis string
+        search_filter = f"nombre_completo.ilike.%{search}%,email.ilike.%{search}%"
+        query_count = query_count.or_(search_filter)
+        query_data = query_data.or_(search_filter)
+
+    if role:
+        query_count = query_count.eq("role", role)
+        query_data = query_data.eq("role", role)
+
+    # Ejecutar count
+    query_count = set_session_context(query_count, request, admin)
+    count_res = safe_supabase_call(query_count.execute)
+    total = count_res.count if count_res.count is not None else 0
+
+    # Ejecutar fetch de datos
+    query_data = query_data.order("created_at", desc=False).range(
+        offset, offset + page_size - 1
     )
     query_data = set_session_context(query_data, request, admin)
     data_res = safe_supabase_call(query_data.execute)
