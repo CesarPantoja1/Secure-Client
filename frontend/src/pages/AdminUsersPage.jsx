@@ -14,23 +14,39 @@ export default function AdminUsersPage() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
   
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [filterRole, setFilterRole] = useState('');
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
 
+  // Debounce para búsqueda
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
   const fetchUsers = useCallback(async (currentPage) => {
     try {
-      const data = await execute(`/api/admin/users?page=${currentPage}&page_size=${pageSize}`);
+      let url = `/api/admin/users?page=${currentPage}&page_size=${pageSize}`;
+      if (debouncedSearch) url += `&search=${encodeURIComponent(debouncedSearch)}`;
+      if (filterRole) url += `&role=${encodeURIComponent(filterRole)}`;
+
+      const data = await execute(url);
       setUsers(data.users || []);
       setTotal(data.total || 0);
     } catch {
       // Manejado por useApi / ErrorNotification
     }
-  }, [execute, pageSize]);
+  }, [execute, pageSize, debouncedSearch, filterRole]);
 
   useEffect(() => {
     let active = true;
     const load = async () => {
-      await Promise.resolve(); // Defer state update to avoid calling setState synchronously in effect body
+      await Promise.resolve();
       if (active) {
         fetchUsers(page);
       }
@@ -140,13 +156,32 @@ export default function AdminUsersPage() {
       <div className={styles.filtersRow}>
         <div className={styles.searchInputWrapper}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <input type="text" className={styles.searchInput} placeholder="Buscar por nombre o correo..." />
+          <input 
+            type="text" 
+            className={styles.searchInput} 
+            placeholder="Buscar por nombre o correo..." 
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setPage(1);
+            }}
+          />
         </div>
         
-        <button className={styles.filterSelect}>
-          Todos los roles
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </button>
+        <select 
+          className={styles.filterSelect}
+          value={filterRole}
+          onChange={(e) => {
+            setFilterRole(e.target.value);
+            setPage(1);
+          }}
+          style={{ width: 'auto', paddingRight: '32px' }}
+        >
+          <option value="">Todos los roles</option>
+          <option value="admin">Administrador</option>
+          <option value="usuario">Usuario Regular</option>
+          <option value="auditor">Auditor</option>
+        </select>
         
         <button className={styles.filterSelect}>
           Todos los estados

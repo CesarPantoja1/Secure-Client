@@ -75,7 +75,7 @@ export default function TareasListPage() {
   // Estado del Dropdown de acciones
   const [dropdownOpenId, setDropdownOpenId] = useState(null);
 
-  const pageSize = 20;
+  const pageSize = 10;
 
   // Debounce search
   useEffect(() => {
@@ -121,6 +121,7 @@ export default function TareasListPage() {
   const fetchTareas = useCallback(async () => {
     try {
       let url = `/api/tareas?page=${page}&page_size=${pageSize}`;
+      if (debouncedSearch) url += `&search=${encodeURIComponent(debouncedSearch)}`;
       if (filtroEstado) url += `&estado=${filtroEstado}`;
       if (filtroPrioridad) url += `&prioridad=${filtroPrioridad}`;
       if (filtroResponsable) url += `&asignado_a=${filtroResponsable}`;
@@ -128,23 +129,13 @@ export default function TareasListPage() {
       const data = await execute(url);
       
       if (data && data.items) {
-        // Filtrado local por texto ya que el backend no tiene un param `search` implementado para tareas
-        let items = data.items;
-        if (debouncedSearch) {
-          const q = debouncedSearch.toLowerCase();
-          items = items.filter(t => 
-            t.titulo.toLowerCase().includes(q) || 
-            (t.id && t.id.toLowerCase().includes(q)) ||
-            (clientesMap[t.cliente_id] && clientesMap[t.cliente_id].toLowerCase().includes(q))
-          );
-        }
-        setTareas(items);
-        setTotal(debouncedSearch ? items.length : data.total);
+        setTareas(data.items);
+        setTotal(data.total);
       }
     } catch {
       // Manejado globalmente
     }
-  }, [execute, page, pageSize, filtroEstado, filtroPrioridad, filtroResponsable, debouncedSearch, clientesMap]);
+  }, [execute, page, pageSize, filtroEstado, filtroPrioridad, filtroResponsable, debouncedSearch]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

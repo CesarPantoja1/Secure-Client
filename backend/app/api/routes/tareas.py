@@ -26,6 +26,7 @@ async def get_tareas(
     request: Request,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
+    search: Optional[str] = Query(None),
     cliente_id: Optional[str] = Query(None),
     estado: Optional[str] = Query(None),
     prioridad: Optional[str] = Query(None),
@@ -40,6 +41,8 @@ async def get_tareas(
         .eq("tenant_id", tenant_id)
     )
 
+    if search:
+        query = query.ilike("titulo", f"%{search}%")
     if cliente_id:
         query = query.eq("cliente_id", cliente_id)
     if estado:

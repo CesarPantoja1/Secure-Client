@@ -39,6 +39,7 @@ async def get_clientes(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     search: str = Query(None),
+    tipo: str = Query(None),
     auth_context: AuthContext = Depends(get_auth_context),
 ):
     tenant_id = auth_context.tenant_id
@@ -50,6 +51,8 @@ async def get_clientes(
     )
     if search:
         query = query.ilike("nombre", f"%{search}%")
+    if tipo:
+        query = query.eq("tipo", tipo)
 
     offset = (page - 1) * page_size
     query = query.range(offset, offset + page_size - 1)

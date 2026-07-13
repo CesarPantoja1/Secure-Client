@@ -17,7 +17,7 @@ export default function ClientesListPage() {
   const [filtroTipo, setFiltroTipo] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   
-  const pageSize = 20;
+  const pageSize = 10;
 
   // Debounce para la búsqueda
   useEffect(() => {
@@ -30,18 +30,15 @@ export default function ClientesListPage() {
 
   const fetchClientes = useCallback(async () => {
     try {
-      const searchParam = debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : '';
-      const data = await execute(`/api/clientes?page=${page}&page_size=${pageSize}${searchParam}`);
+      let url = `/api/clientes?page=${page}&page_size=${pageSize}`;
+      if (debouncedSearch) url += `&search=${encodeURIComponent(debouncedSearch)}`;
+      if (filtroTipo) url += `&tipo=${encodeURIComponent(filtroTipo)}`;
+      
+      const data = await execute(url);
       
       if (data && data.items) {
-        let filteredItems = data.items;
-        if (filtroTipo) {
-          filteredItems = filteredItems.filter(c => c.tipo === filtroTipo);
-        }
-        setClientes(filteredItems);
-        // Si aplicamos filtro local, el total real de esa página puede variar, 
-        // pero mantendremos la lógica simple o usaremos la longitud filtrada si es menor al pageSize
-        setTotal(filtroTipo ? filteredItems.length : data.total);
+        setClientes(data.items);
+        setTotal(data.total);
       }
     } catch {
       // Manejado por useApi / ErrorNotification

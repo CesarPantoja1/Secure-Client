@@ -156,8 +156,7 @@ export default function AuditoriaPage() {
       await fetchLogs(page);
     };
     ejecutarCarga();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, fetchLogs]);
 
   // Resetear filtros
   const handleClearFilters = () => {
